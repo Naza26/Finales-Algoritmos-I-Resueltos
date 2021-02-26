@@ -1,5 +1,5 @@
 =======================
-Examen final 2020-09-25
+Examen final 2020-09-14
 =======================
 
 --------------------------------------------------------
@@ -9,18 +9,17 @@ Examen final 2020-09-25
 Objetivo
 ========
 
-Implementar la clase ``Editor``, que representa el estado de un editor de texto.
+Implementar la clase ``Imagen``, que representa una imagen digital de tamaño arbitrario.
 
 Se dispone de los siguientes archivos:
 
-* ``editor.py``: implementación (inicialmente vacía) de la clase ``Editor``
+* ``imagen.py``: implementación (inicialmente vacía) de la clase ``Imagen``
 * ``pruebas.py``: Pruebas automáticas
-* ``texto.txt``: Un archivo de texto
 
 El archivo ``pruebas.py`` efectúa una serie de pruebas para verificar el correcto
-funcionamiento de la clase ``Editor``.
+funcionamiento de la clase ``Imagen``.
 
-La idea es agregar en ``editor.py`` todo el código necesario para que las
+La idea es agregar en ``imagen.py`` todo el código necesario para que las
 pruebas automáticas pasen.
 
 Hay 5 ejercicios. Es condición necesaria (pero no suficiente) para aprobar el
@@ -54,137 +53,150 @@ cantidad de ejercicios OK. Ejemplo:
 Recordar: es condición necesaria (pero no suficiente) para aprobar el examen
 que haya al menos 3 ejercicios OK.
 
-La clase Editor
+La clase Imagen
 ===============
 
-La clase ``Editor`` modela el estado interno de un editor de texto (pensar en cualquier editor
-de texto plano: Bloc de notas, Gedit, VSCode, Sublime, etc).
+La clase ``Imagen`` modela una imagen digital de tamaño arbitrario.
 
-* El **editor** mantiene el contenido de un archivo de **texto**, que se va modificando a medida que
-  el usuario hace acciones.
-* El texto conceptualmente está formado por una secuencia de **líneas**.
-* Una **línea** es básicamente una secuencia de caracteres que termina con el caracter ``'\n'``, y no
-  contiene ningún caracter ``'\n'`` en el medio.
-* El editor siempre tiene **al menos una línea** de texto.
-* Cada línea puede tener una longitud arbitrariamente grande, e independiente de las otras líneas.
-  Cada línea tiene **al menos un caracter** (ya que el ``'\n'`` debe estar siempre como último caracter).
+* Una **imagen** está formada por ``ancho × alto`` **pixels**.
+* Los pixels forman una grilla rectangular con coordenadas cartesianas ``(x, y)``. Las coordenadas ``(0, 0)``
+  corresponden al pixel en la esquina superior izquierda. Las coordenadas ``(ancho - 1, alto - 1)``
+  corresponden al pixel en la esquina inferior derecha.
+* Cada **pixel** tiene un color determinado. Un color se determina por 3 valores numéricos ``(R, G, B)``,
+  que corresponden a la intensidad del color rojo (``R``), verde (``G``) y azul (``B``).
+* Cada uno de los valores ``R``, ``G``, ``B`` puede ir entre 0 y ``valor_max``.
 
-* El editor además maneja el estado del **cursor**, que indica la posición en la que el usuario
-  insertará los caracteres al escribir.
-* La posición del cursor está dada por un número de **línea** y un número de **columna**.
-* Las líneas y columnas se cuentan a partir de 1.
-  Es decir que si el texto tiene 10 líneas, se numeran de 1 a 10, y si una
-  línea tiene 15 caracteres (incluyendo el ``'\n'`` final), las columnas en esa
-  línea se numeran del 1 al 15, siendo la columna 15 la correspondiente al
-  ``'\n'``.
+Por ejemplo, si ``valor_max = 255``, el color ``(0, 0, 0)`` representa el color
+negro, ``(255, 0, 0)`` es el color rojo, ``(255, 255, 255)`` es
+el color blanco, ``(128, 128, 128)`` es un color gris, etc.
 
 Descripción de las pruebas
 ==========================
 
-``ejercicio_1``:
-    Prueba el funcionamiento básico de la clase ``Editor``. Sin esta prueba funcionando
+``ejercicio_1``: Funcionamiento básico
+    Prueba el funcionamiento básico de la clase ``Imagen``. Sin esta prueba funcionando
     probablemente no se pueda pasar ninguna de las otras pruebas.
 
     Métodos a implementar:
 
-    * ``__init__``: Recibe una cadena de texto correspondiente al contenido completo del archivo.
-      Crea una instancia del ``Editor`` con el contenido del archivo y el cursor en la posición
-      ``(1, 1)`` (primera línea, primer caracter).
+    * ``__init__``: Recibe ``valor_max``, ``ancho`` y ``alto``, y crea una instancia
+      de ``Imagen`` con estos parámetros. Todos los pixels son inicializados con el
+      color ``(0, 0, 0)`` (negro).
+    * ``get_valor_max``, ``get_ancho``, ``get_alto``: Devuelven el valor de cada uno de los parámetros.
+    * ``get``: Recibe un par de coordenadas ``(x, y)`` y devuelve una tupla ``(R, G, B)``
+      con el color del pixel correspondiente.
+      Si las coordenadas recibidas están fuera de rango, devuelve el color ``(0, 0, 0)``.
+    * ``set``: Recibe un par de coordenadas ``(x, y)`` y un color ``(R, G, B)`` y
+      asigna el color en el pixel correspondiente.
+      Si las coordenadas recibidas están fuera de rango, no hace nada.
+    * ``pintar``: Recibe un color y asigna ese color a todos los pixels de la imagen.
 
-      Notar que la cadena recibida puede no cumplir con las restricciones que impone el editor.
-      El editor se debe encargar de agregar lo necesario para cumplirlas:
 
-      * La cadena puede estar vacía. El editor debe siempre tener al menos una línea de texto.
-      * La última línea de la cadena puede no terminar con ``'\n'``. Dicho caracter debe ser agregado
-        en el editor.
+``ejercicio_2``: Escribir PPM
+    Prueba que la imagen pueda ser guardada en un archivo con formato PPM.
 
-    * ``cantidad_lineas``: Devuelve la cantidad de líneas que contiene el texto.
+    PPM es un formato de imagen mucho más simple de implementar que JPG o PNG.
+    En su forma más básica es un archivo de **texto**, que tiene la siguiente disposición::
 
-    * ``__str__``: Devuelve una cadena conteniendo el texto completo.
+        P3
+        4 5
+        255
+        0 0 0   1 0  0   2 0  0   3 0   0
+        0 1 0   1 1  1   2 1  4   3 1   9
+        0 2 0   1 2  4   2 2 16   3 2  36
+        0 3 0   1 3  9   2 3 36   3 3  81
+        0 4 0   1 4 16   2 4 64   3 4 144
 
-    * ``leer_archivo``: Recibe la ruta de un archivo de texto y devuelve una instancia de
-      ``Editor`` con el contenido del archivo.
+    La primera línea siempre contiene el texto ``P3`` (para indicar que el archivo tiene formato
+    PPM).
 
-      Nota: esta es una función suelta, no es un método de ``Editor``.
+    La segunda línea tiene el ``ancho`` y el ``alto`` separados por un espacio.
 
-    * ``escribir_archivo``: Recibe la ruta de un archivo y escribe en el mismo el texto completo.
+    La tercera línea tiene el valor ``valor_max``.
 
-``ejercicio_2``:
-    Prueba el movimiento del cursor, que ocurre cuando el usuario presiona las teclas de dirección
-    del teclado.
-
-    Importante: en ningún caso el cursor puede quedar posicionado en un lugar inválido (línea o
-    columna fuera de rango). Siempre que el usuario intente moverse fuera de los límites del texto, se
-    hará alguna corrección para que el cursor quede en una posición válida.
-
-    Métodos a implementar:
-
-    * ``cursor_pos``: Devuelve una tupla con el número de línea y columna del cursor.
-
-    * ``cursor_caracter``: Devuelve el caracter sobre el cual el cursor está posicionado.
-
-    * ``mover_derecha``: Mueve el cursor un caracter hacia la derecha.
-
-      Si el cursor estaba en el último caracter de la línea, se moverá al
-      primer caracter de la línea siguiente (en caso de ser posible).
-
-    * ``mover_izquierda``: Mueve el cursor un caracter hacia la izquierda.
-
-      Si el cursor estaba en el primer caracter de la línea, se moverá al
-      último caracter de la línea anterior (en caso de ser posible).
-
-    * ``mover_arriba``: Mueve el cursor un caracter hacia arriba.
-
-      Si la línea de arriba es más corta que el número de columna actual, se posiciona
-      el cursor en el último caracter.
-
-    * ``mover_abajo``: Mueve el cursor un caracter hacia abajo.
-
-      Si la línea de abajo es más corta que el número de columna actual, se posiciona
-      el cursor en el último caracter.
-
-    * ``mover_a``: Recibe un número de línea y columna y mueve el cursor a esa posición.
-
-      Si la línea y/o columna están fuera de los límites, se ajustarán para que el cursor quede
-      en una posición válida.
-
-``ejercicio_3``:
-    Prueba que el usuario pueda escribir texto y que el mismo se inserte en el lugar adecuado.
-
-    Nota: este ejercicio depende de que el cursor funcione, aunque solo es necesario hacer una
-    implementación básica de la función ``mover_a`` del ejercicio 2.
+    Luego, por cada fila de pixels de la imagen hay una línea de texto, y cada línea contiene los
+    valores ``(R, G, B)`` de cada pixel, todo separado por espacios (es indiferente la cantidad
+    de espacios utilizados).
 
     Métodos a implementar:
 
-    * ``insertar``: Recibe una cadena de texto que representa una secuencia de caracteres ingresados
-      mediante el teclado. Por cada caracter, el mismo es insertado en la posición del cursor, y
-      el cursor avanza una posición hacia la derecha.
+    * ``escribir_ppm``: Recibe el nombre de un archivo y escribe en ese archivo el contenido
+      de la imagen en formato PPM.
 
-      Algunos de los caracteres ingresados pueden ser ``\n``, el cual luego de
-      ser insertado divide la línea actual en dos líneas; todos los caracteres
-      a la derecha del cursor pasan a formar una línea nueva abajo de la línea
-      actual, y el cursor se posiciona al inicio de la misma.
+``ejercicio_3``: Leer PPM
+    Prueba que podamos leer un archivo PPM.
 
-``ejercicio_4``:
-    Palabras más frecuentes
+    Funciones a implementar:
 
-    Métodos a implementar:
+    * ``leer_ppm``: Recibe el nombre de un archivo PPM y devuelve una ``Imagen`` a partir
+      del contenido del mismo.
 
-    * ``palabras_mas_frecuentes``: Devuelve una lista de tuplas ``(palabra, cantidad)``, ordenada
-      de mayor a menor por ``cantidad``, indicando todas las palabras contenidas en el texto, y
-      la cantidad de veces que aparece cada una.
+    Nota: ``leer_ppm`` es una función suelta, no es un método de ``Imagen``.
 
-      Una palabra se considera como cualquier secuencia de caracteres consecutivos que no
-      incluyen el caracter ``'\n'`` o un espacio.
+``ejercicio_4``: Histograma
+    Prueba que podamos obtener el histograma de colores de una imagen, y otros datos descriptivos.
 
-      Por ejemplo, en la cadena ``'  hola,    que\n tal\n'``, las palabras son ``'hola,'`` (notar que
-      la coma se considera parte de la palabra), ``'que'``, ``'tal'``.
-
-``ejercicio_5``:
-    Buscar
+    Un histograma de colores es una descripción resumida de la frecuencia en la que cada color
+    aparece en una imagen.
 
     Métodos a implementar:
 
-    * ``buscar``: Recibe una cadena que no incluye ``'\n'``. Devuelve una lista de tuplas
-      ``(linea, columna)`` con todas las posiciones en el texto en las que se encuentra la cadena.
+    * ``histograma``: Devuelve un diccionario de la forma ``{color: cantidad,
+      ...}``, en el que las claves son cada uno de los colores presentes en la
+      imagen y los valores son la cantidad de pixels con ese color.
+    * ``colores_mas_frecuentes``: Devuelve una lista de tuplas con la forma
+      ``[(color, cantidad), ...]``.  Cada elemento es un par de valores del
+      histograma, y la lista está ordenada en forma descendente con respecto a
+      la cantidad. Es decir que el primer elemento es el color más frecuente.
+    * ``promedio``: Devuelve el color promedio (formado por el promedio de cada uno
+      de los valores ``R``, ``G``, ``B``, calculado con división entera).
 
+``ejercicio_5``: Balde de pintura
+    Prueba que podamos rellenar una región de la imagen con un color.
+
+    Queremos implementar un mecanismo similar al "Paint", cuando seleccionamos la
+    herramienta de "balde", luego seleccionamos un color y hacemos click en un pixel de la imagen.
+    Lo que esperamos es que se pinte la imagen con el color seleccionado solanente dentro
+    del área en el que los pixels tienen un color uniforme.
+
+    En nuestra variante vamos a simplificar un poco y vamos a rellenar con el color ``c``
+    todos los pixels contiguos al pixel seleccionado, hasta que encontremos un pixel
+    que ya tenía el color ``c``.
+
+    Ejemplo, si tenemos esta imagen::
+
+        ........#.
+        ...######.
+        ...#......
+        ####..####
+        ......#...
+        ##.X.#....
+        .#...#....
+        .#..#.....
+        .##.#.....
+        ..#.#.....
+
+        . = color blanco (valor_max, valor_max, valor_max)
+        # = color negro (0, 0, 0)
+
+    y luego rellenamos con color negro a partir del pixel ``X``, ubicado en las
+    coordenadas ``(3, 5)``, el resultado debería ser::
+
+        ........##
+        ...#######
+        ...#######
+        ##########
+        #######...
+        ######....
+        .#####....
+        .####.....
+        .####.....
+        ..###.....
+
+    Métodos a implementar:
+
+    * ``balde_de_pintura``: Recibe un par de coordenadas ``(x, y)`` y un color ``c`` (R, G, B),
+      y pinta el pixel y todos sus vecinos del color ``c``, expandiendo hasta
+      que se encuentra con un pixel que ya tenía el color ``c`` previamente.
+
+    Ayuda: este algoritmo suele ser fácil de implementar en forma recursiva.

@@ -1,127 +1,221 @@
 import traceback
+import collections
 import random
-import aerodb
+
+import imagen
 
 def ejercicio_1():
-    a = aerodb.AeroDB()
-    assert a.cantidad_aeropuertos() == 0
+    # verificamos la creación
+    img = imagen.Imagen(16, 20, 84)
 
-    a.aeropuerto_agregar("EZE", "Ministro Pistarini International Airport", "Buenos Aires", "Argentina", -34.8222, -58.5358)
-    assert a.cantidad_aeropuertos() == 1
-    assert a.aeropuerto_get_nombre("EZE") == "Ministro Pistarini International Airport"
-    assert a.aeropuerto_get_ciudad("EZE") == "Buenos Aires"
-    assert a.aeropuerto_get_pais("EZE") == "Argentina"
-    assert a.aeropuerto_get_coords("EZE") == (-34.8222, -58.5358)
+    assert img.get_valor_max() == 16
+    assert img.get_ancho() == 20
+    assert img.get_alto() == 84
 
-    a.aeropuerto_agregar("BRC", "San Carlos De Bariloche Airport", "San Carlos De Bariloche", "Argentina", -41.151199, -71.157501)
-    assert a.cantidad_aeropuertos() == 2
-    assert a.aeropuerto_get_nombre("BRC") == "San Carlos De Bariloche Airport"
-    assert a.aeropuerto_get_ciudad("BRC") == "San Carlos De Bariloche"
-    assert a.aeropuerto_get_pais("BRC") == "Argentina"
-    assert a.aeropuerto_get_coords("BRC") == (-41.151199, -71.157501)
+    # verificamos que todos los pixels tienen color negro
+    for x in range(30):
+        for y in range(60):
+            assert img.get(x, y) == (0, 0, 0)
 
-    a.aeropuerto_agregar("FRA", "Frankfurt am Main Airport", "Frankfurt", "Germany", 50.033333, 8.570556)
-    assert a.cantidad_aeropuertos() == 3
+    img = imagen.Imagen(255, 30, 60)
 
-    assert a.cantidad_rutas() == 0
+    assert img.get_valor_max() == 255
+    assert img.get_ancho() == 30
+    assert img.get_alto() == 60
 
-    a.ruta_agregar("AR412", "EZE", "BRC")
-    assert a.cantidad_rutas() == 1
+    # pintamos la imagen con un patrón arbitrario
+    for x in range(30):
+        for y in range(60):
+            color = (x, y, x + y) # (r, g, b)
+            img.set(x, y, color)
 
-    a.ruta_agregar("AR412", "BRC", "EZE")
-    assert a.cantidad_rutas() == 2
+    # verificamos que cada uno de los pixels tiene el valor asignado
+    for x in range(30):
+        for y in range(60):
+            color = (x, y, x + y)
+            assert img.get(x, y) == color
 
-    a.ruta_agregar("LH3320", "EZE", "FRA")
-    assert a.cantidad_rutas() == 3
+    # asignar un pixel en una coordenada fuera de rango no debería dar error
+    img.set(-1, -1, (255, 255, 255))
+    img.set(30, 60, (255, 255, 255))
+
+    # obtener un pixel en una coordenada fuera de rango debería dar siempre negro (0, 0, 0)
+    img.get(-1, -1) == (0, 0, 0)
+    img.get(30, 60) == (0, 0, 0)
+
+    color = (255, 255, 255)
+
+    # pintamos la imagen con un color uniforme
+    img.pintar(color)
+
+    # verificamos que cada uno de los pixels tiene el valor asignado
+    for x in range(30):
+        for y in range(60):
+            assert img.get(x, y) == color
+
+    # verificamos que set() aplica restricción de rango
+    img.set(10, 10, (256, -1, -3))
+    assert img.get(10, 10) == (255, 0, 0)
+
 
 def ejercicio_2():
-    a = aerodb.AeroDB()
+    # función auxiliar
+    def _verificar_ppm(ruta, esperado):
+        esperado = _quitar_sangria(esperado)
+        with open(ruta) as f:
+            obtenido = f.read()
+        lesp = [l.strip() for l in esperado.split('\n') if l.strip()]
+        lobt = [l.strip() for l in obtenido.split('\n') if l.strip()]
+        assert len(lesp) == len(lobt), \
+            f"El archivo PPM no es correcto (diferencia en la cantidad de líneas)\n" + \
+            f"esperado:\n{esperado}\n" + \
+            f"obtenido:\n{obtenido}"
+        for i, (l1, l2) in enumerate(zip(lesp, lobt)):
+            assert l1.split() == l2.split(), \
+                f"El archivo PPM no es correcto (diferencia en la línea {i + 1}):\n" + \
+                f"esperado:\n{esperado}\n" + \
+                f"obtenido:\n{obtenido}"
 
-    a.aeropuerto_agregar("EZE", "Ministro Pistarini International Airport", "Buenos Aires", "Argentina", -34.8222, -58.5358)
-    a.aeropuerto_agregar("AEP", "Jorge Newbery Airpark", "Buenos Aires", "Argentina", -34.5592, -58.4156)
-    a.aeropuerto_agregar("BRC", "San Carlos De Bariloche Airport", "San Carlos De Bariloche", "Argentina", -41.151199, -71.157501)
-    a.aeropuerto_agregar("FRA", "Frankfurt am Main Airport", "Frankfurt", "Germany", 50.033333, 8.570556)
-    a.aeropuerto_agregar("DUB", "Dublin Airport", "Dublin", "Ireland", 53.421299, -6.27007)
-    a.ruta_agregar("AR412", "EZE", "BRC")
-    a.ruta_agregar("AR412", "BRC", "EZE")
-    a.ruta_agregar("AR412", "AEP", "BRC")
-    a.ruta_agregar("AR412", "BRC", "AEP")
-    a.ruta_agregar("LH3320", "EZE", "FRA")
-    a.ruta_agregar("EI837", "DUB", "FRA")
-    a.ruta_agregar("EI837", "FRA", "DUB")
-    a.ruta_agregar("LH3320", "DUB", "FRA")
-    a.ruta_agregar("LH3320", "FRA", "DUB")
+    img = imagen.Imagen(255, 4, 5)
 
-    rutas = a.rutas_desde_ciudad("Buenos Aires")
-    assert_iguales(
-            'a.rutas_desde_ciudad("Buenos Aires")',
-            sorted(rutas),
-            [('AR412', 'AEP', 'BRC'), ('AR412', 'EZE', 'BRC'), ('LH3320', 'EZE', 'FRA')]
-    )
+    # pintamos la imagen con un patrón arbitrario
+    for x in range(4):
+        for y in range(5):
+            color = (x, y, x * x * y * y) # (r, g, b)
+            img.set(x, y, color)
 
-    rutas = a.rutas_hacia_ciudad("Frankfurt")
-    assert_iguales(
-            'a.rutas_hacia_ciudad("Frankfurt")',
-            sorted(rutas),
-            [('EI837', 'DUB', 'FRA'), ('LH3320', 'DUB', 'FRA'), ('LH3320', 'EZE', 'FRA')]
-    )
+    # escribimos la imagen en formato PPM
+    img.escribir_ppm("imagen.ppm")
+
+    # verificamos el contenido del archivo
+    _verificar_ppm("imagen.ppm", """
+        P3
+        4 5
+        255
+        0 0 0   1 0  0   2 0  0   3 0   0
+        0 1 0   1 1  1   2 1  4   3 1   9
+        0 2 0   1 2  4   2 2 16   3 2  36
+        0 3 0   1 3  9   2 3 36   3 3  81
+        0 4 0   1 4 16   2 4 64   3 4 144
+    """)
 
 def ejercicio_3():
-    a = aerodb.cargar("aeropuertos.csv", "rutas.csv")
+    with open("imagen.ppm", "w") as f:
+        f.write(_quitar_sangria("""
+            P3
+            4 5
+            255
+            0  0  0    0  0  0    0  0  0   15  0 15
+            0  0  0    0 15  7    0  0  0    0  0  0
+            0  0  0    0  0  0    0 15  7    0  0  0
+            15 0 15    0  0  0    0  0  0    0  0  0
+            15 0 15    0  0  0    0  0  0    0 15  0
+        """))
 
-    assert a.cantidad_aeropuertos() == 6072
-    assert a.cantidad_rutas() == 67184
+    # leemos el archivo PPM
+    img = imagen.leer_ppm("imagen.ppm")
 
-    assert a.aeropuerto_get_nombre("EZE") == "Ministro Pistarini International Airport"
-    assert a.aeropuerto_get_ciudad("EZE") == "Buenos Aires"
-    assert a.aeropuerto_get_pais("EZE") == "Argentina"
-
-    #assert a.aeropuerto_con_mas_rutas() == ("ATL", 1826)
+    assert img.get_valor_max() == 255
+    assert img.get_ancho() == 4
+    assert img.get_alto() == 5
+    assert img.get(0, 0) == (0, 0, 0)
+    assert img.get(1, 1) == (0, 15, 7)
+    assert img.get(0, 4) == (15, 0, 15)
+    assert img.get(3, 4) == (0, 15, 0)
 
 def ejercicio_4():
-    a = aerodb.AeroDB()
+    negro = (0, 0, 0)
+    blanco = (255, 255, 255)
+    rojo = (255, 0, 0)
+    verde = (0, 255, 0)
 
-    a.aeropuerto_agregar("EZE", "Ministro Pistarini International Airport", "Buenos Aires", "Argentina", -34.8222, -58.5358)
-    a.aeropuerto_agregar("BRC", "San Carlos De Bariloche Airport", "San Carlos De Bariloche", "Argentina", -41.151199, -71.157501)
-    a.aeropuerto_agregar("FRA", "Frankfurt am Main Airport", "Frankfurt", "Germany", 50.033333, 8.570556)
-    a.aeropuerto_agregar("DUB", "Dublin Airport", "Dublin", "Ireland", 53.421299, -6.27007)
+    histograma_esperado = {
+        negro: 100,
+        rojo: 250,
+        verde: (100*100 - 100 - 200 - 250),
+        blanco: 200,
+    }
 
-    assert_iguales(
-            "a.aeropuertos_ordenados_por_distancia(-34, -58)",
-            a.aeropuertos_ordenados_por_distancia(-34, -58),
-            ['EZE', 'BRC', 'DUB', 'FRA']
-    )
+    colores = sum([[color] * cantidad for color, cantidad in histograma_esperado.items()], [])
+    random.shuffle(colores)
+
+    # creamos una imagen de 100 x 100 con un histograma arbitrario
+    img = imagen.Imagen(255, 100, 100)
+    for x in range(100):
+        for y in range(100):
+            color = (255 - x, y, x + y) # (r, g, b)
+            img.set(x, y, colores.pop())
+    assert len(colores) == 0
+
+    h = img.histograma()
+
+    assert h == histograma_esperado, f"\nhistograma         ={h}\nhistograma esperado={histograma_esperado}"
+
+    c = img.colores_mas_frecuentes()
+
+    c_esperado = [
+        (verde, 100*100 - 100 - 200 - 250),
+        (rojo, 250),
+        (blanco, 200),
+        (negro, 100),
+    ]
+
+    assert c == c_esperado, f"\colores         ={h}\colores esperado={histograma_esperado}"
+
+    assert img.promedio() == (11, 246, 5)
 
 def ejercicio_5():
-    a = aerodb.AeroDB()
+    # función auxiliar
+    def _pintar_patron(img, patron):
+        for y, linea in enumerate(_quitar_sangria(patron).split('\n')):
+            for x, c in enumerate(linea):
+                color = (0, 0, 0) if c == '.' else (255, 255, 255)
+                img.set(x, y, color)
 
-    a.aeropuerto_agregar("EZE", "Ministro Pistarini International Airport", "Buenos Aires", "Argentina", -34.8222, -58.5358)
-    a.aeropuerto_agregar("BRC", "San Carlos De Bariloche Airport", "San Carlos De Bariloche", "Argentina", -41.151199, -71.157501)
-    a.aeropuerto_agregar("FRA", "Frankfurt am Main Airport", "Frankfurt", "Germany", 50.033333, 8.570556)
-    a.aeropuerto_agregar("DUB", "Dublin Airport", "Dublin", "Ireland", 53.421299, -6.27007)
-    a.ruta_agregar("AR412", "EZE", "BRC")
-    a.ruta_agregar("LH3320", "EZE", "FRA")
-    a.ruta_agregar("EI837", "DUB", "FRA")
-    a.ruta_agregar("EI837", "FRA", "DUB")
-    a.ruta_agregar("LH3320", "DUB", "FRA")
-    a.ruta_agregar("LH3320", "FRA", "DUB")
+    # función auxiliar
+    def _verificar_patron(img, patron):
+        for y, linea in enumerate(_quitar_sangria(patron).split('\n')):
+            for x, c in enumerate(linea):
+                color_esperado = (0, 0, 0) if c == '.' else (255, 255, 255)
+                color = img.get(x, y)
+                assert color == color_esperado, f"el pixel ({x}, {y}) debería ser color {color_esperado}, pero es {color}"
 
-    itinerario = a.armar_itinerario("BRC", "DUB")
-    assert itinerario is None
+    img = imagen.Imagen(255, 10, 10)
+    # pintamos una región "hueca". Los caracteres "." representan un pixel color negro,
+    # y "#" un pixel color blanco.
+    _pintar_patron(img, """
+        ........#.
+        ...######.
+        ...#......
+        ####..####
+        ......#...
+        ##...#....
+        .#...#....
+        .#..#.....
+        .##.#.....
+        ..#.#.....
+    """)
 
-    itinerario = a.armar_itinerario("EZE", "BRC")
-    assert itinerario == [("AR412", "EZE", "BRC")]
+    # rellenamos de color blanco a partir del pixel (4, 5).
+    img.balde_de_pintura(4, 5, (255, 255, 255))
 
-    itinerario = a.armar_itinerario("EZE", "DUB")
-    assert itinerario == [("LH3320", "EZE", "FRA"), ("EI837", "FRA", "DUB")] \
-           or itinerario == [("LH3320", "EZE", "FRA"), ("LH3320", "FRA", "DUB")]
+    _verificar_patron(img, """
+        ........##
+        ...#######
+        ...#######
+        ##########
+        #######...
+        ######....
+        .#####....
+        .####.....
+        .####.....
+        ..###.....
+    """)
 
 
-def assert_iguales(k, v1, v2):
-    k1 = f"Resultado de {k}"
-    k2 = f"Resultado esperado"
-    n = max(len(k1), len(k2))
-    assert v1 == v2, f"\n  {k1:<{n}}: {v1}\n  {k2:<{n}}: {v2}"
+def _quitar_sangria(s):
+    "Función auxiliar. Quita la sangría del texto."
+    return ''.join([l.strip() + '\n' for l in s.split('\n') if l.strip()])
 
 def main():
     ejercicios = [
