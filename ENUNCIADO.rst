@@ -1,5 +1,5 @@
 =======================
-Examen final 2020-09-14
+Examen final 2020-09-07
 =======================
 
 --------------------------------------------------------
@@ -9,17 +9,18 @@ Examen final 2020-09-14
 Objetivo
 ========
 
-Implementar la clase ``Imagen``, que representa una imagen digital de tamaño arbitrario.
+Implementar la clase ``Tuiter``, que permite modelar el funcionamiento de una plataforma
+sospechosamente similar a Twitter.
 
 Se dispone de los siguientes archivos:
 
-* ``imagen.py``: implementación (inicialmente vacía) de la clase ``Imagen``
+* ``tuiter.py``: implementación (inicialmente vacía) de la clase ``Tuiter``
 * ``pruebas.py``: Pruebas automáticas
 
 El archivo ``pruebas.py`` efectúa una serie de pruebas para verificar el correcto
-funcionamiento de la clase ``Imagen``.
+funcionamiento de la clase ``Tuiter``.
 
-La idea es agregar en ``imagen.py`` todo el código necesario para que las
+La idea es agregar en ``tuiter.py`` todo el código necesario para que las
 pruebas automáticas pasen.
 
 Hay 5 ejercicios. Es condición necesaria (pero no suficiente) para aprobar el
@@ -53,150 +54,142 @@ cantidad de ejercicios OK. Ejemplo:
 Recordar: es condición necesaria (pero no suficiente) para aprobar el examen
 que haya al menos 3 ejercicios OK.
 
-La clase Imagen
+La clase Tuiter
 ===============
 
-La clase ``Imagen`` modela una imagen digital de tamaño arbitrario.
+La clase ``Tuiter`` modela una plataforma de publicación de contenido (**tuits**)
+por parte de usuarios (**autores**).
 
-* Una **imagen** está formada por ``ancho × alto`` **pixels**.
-* Los pixels forman una grilla rectangular con coordenadas cartesianas ``(x, y)``. Las coordenadas ``(0, 0)``
-  corresponden al pixel en la esquina superior izquierda. Las coordenadas ``(ancho - 1, alto - 1)``
-  corresponden al pixel en la esquina inferior derecha.
-* Cada **pixel** tiene un color determinado. Un color se determina por 3 valores numéricos ``(R, G, B)``,
-  que corresponden a la intensidad del color rojo (``R``), verde (``G``) y azul (``B``).
-* Cada uno de los valores ``R``, ``G``, ``B`` puede ir entre 0 y ``valor_max``.
+Un **autor** tiene, como mínimo:
 
-Por ejemplo, si ``valor_max = 255``, el color ``(0, 0, 0)`` representa el color
-negro, ``(255, 0, 0)`` es el color rojo, ``(255, 255, 255)`` es
-el color blanco, ``(128, 128, 128)`` es un color gris, etc.
+* Un número identificatorio único (el ID del autor)
+* Un nombre
+* Un **muro** (explicado abajo)
+
+Un **tuit** tiene, como mínimo:
+
+* Un número identificatorio único (el ID del tuit)
+* El ID del autor del tuit
+* Un mensaje
+
+IDs
+---
+
+Desde "afuera" de la implementación, tanto los tuits como los usuarios se
+identifican mediante sus IDs. Es decir, todas las operaciones reciben y
+devuelven IDs. La elección de estos IDs al crear usaurios/tuits queda a cargo
+de la clase ``Tuiter``.
+
+Los IDs de los usuarios deben ser únicos, y lo mismo para los tuits, pero no
+hay problema en que un tuit y un autor tengan el mismo ID.
+
+**Recomendación:** usar números crecientes:
+
+* Creamos el primer autor -> ID = 0
+* Creamos el primer tuit -> ID = 0
+* Creamos el segundo autor -> ID = 1
+* Creamos el segundo tuit -> ID = 1
+* Creamos el tercer tuit -> ID = 2
+
+El muro
+-------
+
+Cada autor tiene un **muro** que es una secuencia de tuits (que pueden haber sido publicados
+por el mismo autor o no):
+
+* Al **publicar** un tuit, el tuit se agrega automáticamente al muro del autor.
+* Un autor puede **compartir** un tuit previamente publicado por otro autor. El tuit
+  se agrega al muro del autor que lo comparte.
+
+  * Un autor no puede compartir un tuit creado por sí mismo.
+  * El tuit puede ser compartido muchas veces por el mismo autor (siempre y
+    cuando no sea el autor del tuit).
 
 Descripción de las pruebas
 ==========================
 
-``ejercicio_1``: Funcionamiento básico
-    Prueba el funcionamiento básico de la clase ``Imagen``. Sin esta prueba funcionando
+``ejercicio_1``: Publicar y compartir
+    Prueba el funcionamiento básico de ``Tuiter``. Sin esta prueba funcionando
     probablemente no se pueda pasar ninguna de las otras pruebas.
 
     Métodos a implementar:
 
-    * ``__init__``: Recibe ``valor_max``, ``ancho`` y ``alto``, y crea una instancia
-      de ``Imagen`` con estos parámetros. Todos los pixels son inicializados con el
-      color ``(0, 0, 0)`` (negro).
-    * ``get_valor_max``, ``get_ancho``, ``get_alto``: Devuelven el valor de cada uno de los parámetros.
-    * ``get``: Recibe un par de coordenadas ``(x, y)`` y devuelve una tupla ``(R, G, B)``
-      con el color del pixel correspondiente.
-      Si las coordenadas recibidas están fuera de rango, devuelve el color ``(0, 0, 0)``.
-    * ``set``: Recibe un par de coordenadas ``(x, y)`` y un color ``(R, G, B)`` y
-      asigna el color en el pixel correspondiente.
-      Si las coordenadas recibidas están fuera de rango, no hace nada.
-    * ``pintar``: Recibe un color y asigna ese color a todos los pixels de la imagen.
+    * ``__init__``: Crea una instancia de Tuiter con 0 autores y 0 tuits.
+    * ``crear_autor``: Recibe un nombre, y crea un nuevo autor con un ID único
+      (es decir, no puede ser igual al ID de otro autor ya existente) y el
+      nombre especificado. Devuelve el ID del autor.
+    * ``publicar``: Recibe el ID de un autor y un mensaje, y crea un nuevo tuit
+      con un ID único (es decir, no puede ser igual al ID de otro tuit ya existente),
+      el autor y el mensaje especificados. Agrega el tuit al muro del autor. Devuelve
+      el ID del tuit.
+    * ``compartir``: Recibe el ID de un tuit y el ID de un autor. Si el tuit
+      puede ser compartido por el autor lo agrega al muro de ese autor y
+      devuelve ``True``.  Devuelve ``False`` en caso contrario.
+    * ``tuit_id_autor``: Recibe el ID de un tuit, y devuelve el ID de su autor.
+    * ``tuit_mensaje``: Recibe el ID de un tuit, y devuelve el mensaje del tuit.
+    * ``muro_cantidad``: Recibe el ID de un autor, y devuelve la cantidad de
+      tuits que contiene el muro de ese autor.
+    * ``muro_id_tuit``: Recibe el ID de un autor y una posición ``p`` (entero
+      no negativo).  Devuelve el ID del tuit que está en la posición ``p`` en
+      el muro del autor (según el orden en que fueron agregados al muro). Es
+      decir, si ``p = 0`` devuelve el ID del primer tuit agregado al muro, si
+      ``p = 1`` el segundo tuit, etc.
 
-
-``ejercicio_2``: Escribir PPM
-    Prueba que la imagen pueda ser guardada en un archivo con formato PPM.
-
-    PPM es un formato de imagen mucho más simple de implementar que JPG o PNG.
-    En su forma más básica es un archivo de **texto**, que tiene la siguiente disposición::
-
-        P3
-        4 5
-        255
-        0 0 0   1 0  0   2 0  0   3 0   0
-        0 1 0   1 1  1   2 1  4   3 1   9
-        0 2 0   1 2  4   2 2 16   3 2  36
-        0 3 0   1 3  9   2 3 36   3 3  81
-        0 4 0   1 4 16   2 4 64   3 4 144
-
-    La primera línea siempre contiene el texto ``P3`` (para indicar que el archivo tiene formato
-    PPM).
-
-    La segunda línea tiene el ``ancho`` y el ``alto`` separados por un espacio.
-
-    La tercera línea tiene el valor ``valor_max``.
-
-    Luego, por cada fila de pixels de la imagen hay una línea de texto, y cada línea contiene los
-    valores ``(R, G, B)`` de cada pixel, todo separado por espacios (es indiferente la cantidad
-    de espacios utilizados).
+``ejercicio_2``: CSV
+    Prueba que los tuits de un muro puedan ser guardados en un archivo CSV.
 
     Métodos a implementar:
 
-    * ``escribir_ppm``: Recibe el nombre de un archivo y escribe en ese archivo el contenido
-      de la imagen en formato PPM.
+    * ``muro_escribir_csv``: Recibe el ID de un autor y el nombre de un archivo.
+      Escribe en el archivo el contenido de todos los tuits del muro del autor,
+      con formato ``autor|mensaje`` (incluyendo la cabecera).
 
-``ejercicio_3``: Leer PPM
-    Prueba que podamos leer un archivo PPM.
-
-    Funciones a implementar:
-
-    * ``leer_ppm``: Recibe el nombre de un archivo PPM y devuelve una ``Imagen`` a partir
-      del contenido del mismo.
-
-    Nota: ``leer_ppm`` es una función suelta, no es un método de ``Imagen``.
-
-``ejercicio_4``: Histograma
-    Prueba que podamos obtener el histograma de colores de una imagen, y otros datos descriptivos.
-
-    Un histograma de colores es una descripción resumida de la frecuencia en la que cada color
-    aparece en una imagen.
+``ejercicio_3``: Tuits más compartidos
+    Prueba que podamos obtener los IDs de los tuits ordenados por cantidad de
+    veces que fueron compartidos.
 
     Métodos a implementar:
 
-    * ``histograma``: Devuelve un diccionario de la forma ``{color: cantidad,
-      ...}``, en el que las claves son cada uno de los colores presentes en la
-      imagen y los valores son la cantidad de pixels con ese color.
-    * ``colores_mas_frecuentes``: Devuelve una lista de tuplas con la forma
-      ``[(color, cantidad), ...]``.  Cada elemento es un par de valores del
-      histograma, y la lista está ordenada en forma descendente con respecto a
-      la cantidad. Es decir que el primer elemento es el color más frecuente.
-    * ``promedio``: Devuelve el color promedio (formado por el promedio de cada uno
-      de los valores ``R``, ``G``, ``B``, calculado con división entera).
+    * ``tuits_mas_compartidos``: Devuelve una lista de tuplas, en la que cada tupla tiene la
+      forma ``(id_tuit, cantidad)``, donde ``cantidad`` es la cantidad de veces que el tuit
+      fue compartido. La lista está ordenada por ``cantidad`` en forma descendente, es decir
+      el tuit más compartido primero.
 
-``ejercicio_5``: Balde de pintura
-    Prueba que podamos rellenar una región de la imagen con un color.
+``ejercicio_4``: Likes
+    Prueba que los tuits puedan ser "likeados".
 
-    Queremos implementar un mecanismo similar al "Paint", cuando seleccionamos la
-    herramienta de "balde", luego seleccionamos un color y hacemos click en un pixel de la imagen.
-    Lo que esperamos es que se pinte la imagen con el color seleccionado solanente dentro
-    del área en el que los pixels tienen un color uniforme.
-
-    En nuestra variante vamos a simplificar un poco y vamos a rellenar con el color ``c``
-    todos los pixels contiguos al pixel seleccionado, hasta que encontremos un pixel
-    que ya tenía el color ``c``.
-
-    Ejemplo, si tenemos esta imagen::
-
-        ........#.
-        ...######.
-        ...#......
-        ####..####
-        ......#...
-        ##.X.#....
-        .#...#....
-        .#..#.....
-        .##.#.....
-        ..#.#.....
-
-        . = color blanco (valor_max, valor_max, valor_max)
-        # = color negro (0, 0, 0)
-
-    y luego rellenamos con color negro a partir del pixel ``X``, ubicado en las
-    coordenadas ``(3, 5)``, el resultado debería ser::
-
-        ........##
-        ...#######
-        ...#######
-        ##########
-        #######...
-        ######....
-        .#####....
-        .####.....
-        .####.....
-        ..###.....
+    * Un tuit puede ser likeado por cualquier autor menos el autor del tuit.
+    * Un tuit no puede ser likeado más de una vez por el mismo autor.
 
     Métodos a implementar:
 
-    * ``balde_de_pintura``: Recibe un par de coordenadas ``(x, y)`` y un color ``c`` (R, G, B),
-      y pinta el pixel y todos sus vecinos del color ``c``, expandiendo hasta
-      que se encuentra con un pixel que ya tenía el color ``c`` previamente.
+    * ``tuit_dar_like``: Recibe el ID de un tuit y el ID de un autor. Si el tuit puede ser likeado
+      por el autor, le da like y devuelve ``True``. En caso contrario devuelve ``False``.
+    * ``tuit_fue_likeado_por``: Recibe el ID de un tuit y el ID de un autor. Devuelve ``True`` o
+      ``False`` según si el tuit ya fue likeado por el autor o no.
 
-    Ayuda: este algoritmo suele ser fácil de implementar en forma recursiva.
+``ejercicio_5``: Hilos
+    Pueba el mecanismo de respuestas de tuits.
+
+    * Un autor puede publicar un tuit **en respuesta de** otro tuit ya existente,
+      generando así un **hilo**.
+    * Los hilos no son lineales sino que pueden tener forma de árbol: hay un tuit que es
+      la raíz o el tronco del árbol y luego hay respuestas que son las ramificaciones;
+      y cada respuesta a su vez puede tener más respuestas.
+
+    Métodos a implementar:
+
+    * ``responder``: Recibe el ID de un tuit, el ID de un autor y un mensaje, y
+      publica un nuevo tuit en respuesta del tuit indicado. El nuevo tuit
+      tendrá el autor y mensaje indicados y se agregará al muro del autor,
+      igual que ``publicar``.
+    * ``tuit_respuestas``: Recibe el ID de un tuit y devuelve la lista de IDs de los tuits
+      que son respuestas inmediatas (es decir, no incluye los tuits que son respuestas de
+      respuestas).
+    * ``tuit_en_respuesta_de``: Recibe el ID de un tuit. Si el tuit es la raíz de un hilo,
+      devuelve ``None`` ya que no es en respuesta de ningún otro tuit. En caso contrario,
+      devuelve el ID del tuit que responde.
+    * ``tuit_cantidad_hilo``: Recibe el ID de un tuit, y devuelve la
+      **cantidad** del hilo que tiene como raíz el tuit indicado. Es decir, la
+      cantidad de tuits en total contando el tuit y todas sus respuestas, en
+      forma recursiva.

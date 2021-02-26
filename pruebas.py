@@ -2,220 +2,223 @@ import traceback
 import collections
 import random
 
-import imagen
+import tuiter
 
 def ejercicio_1():
-    # verificamos la creación
-    img = imagen.Imagen(16, 20, 84)
+    t = tuiter.Tuiter()
 
-    assert img.get_valor_max() == 16
-    assert img.get_ancho() == 20
-    assert img.get_alto() == 84
+    # creamos 2 autores
+    id_grace = t.crear_autor("Grace")
+    id_barbara = t.crear_autor("Barbara")
+    assert id_grace is not None
+    assert id_barbara is not None
+    assert id_grace != id_barbara
 
-    # verificamos que todos los pixels tienen color negro
-    for x in range(30):
-        for y in range(60):
-            assert img.get(x, y) == (0, 0, 0)
+    # ambos tienen 0 mensajes en su muro
+    assert t.muro_cantidad(id_grace) == 0
+    assert t.muro_cantidad(id_barbara) == 0
 
-    img = imagen.Imagen(255, 30, 60)
+    # Grace publica un tuit
+    id_tuit_grace = t.publicar(id_grace, "Hola, soy Grace")
+    assert id_tuit_grace is not None
 
-    assert img.get_valor_max() == 255
-    assert img.get_ancho() == 30
-    assert img.get_alto() == 60
+    assert t.tuit_id_autor(id_tuit_grace) == id_grace
+    assert t.tuit_mensaje(id_tuit_grace) == "Hola, soy Grace"
 
-    # pintamos la imagen con un patrón arbitrario
-    for x in range(30):
-        for y in range(60):
-            color = (x, y, x + y) # (r, g, b)
-            img.set(x, y, color)
+    # El tuit fue publicado en el muro de Grace
+    assert t.muro_cantidad(id_grace) == 1
+    assert t.muro_cantidad(id_barbara) == 0
 
-    # verificamos que cada uno de los pixels tiene el valor asignado
-    for x in range(30):
-        for y in range(60):
-            color = (x, y, x + y)
-            assert img.get(x, y) == color
+    # Grace no puede compartir su propio tuit
+    ok = t.compartir(id_tuit_grace, id_grace)
+    assert not ok
 
-    # asignar un pixel en una coordenada fuera de rango no debería dar error
-    img.set(-1, -1, (255, 255, 255))
-    img.set(30, 60, (255, 255, 255))
+    # Barbara comparte el tuit
+    ok = t.compartir(id_tuit_grace, id_barbara)
+    assert ok
 
-    # obtener un pixel en una coordenada fuera de rango debería dar siempre negro (0, 0, 0)
-    img.get(-1, -1) == (0, 0, 0)
-    img.get(30, 60) == (0, 0, 0)
+    assert t.muro_cantidad(id_grace) == 1
+    assert t.muro_cantidad(id_barbara) == 1
 
-    color = (255, 255, 255)
+    # barbara publica 100 tuits
+    for i in range(100):
+        t.publicar(id_barbara, f"Este es mi tuit nro {i + 1}")
 
-    # pintamos la imagen con un color uniforme
-    img.pintar(color)
+    assert t.muro_cantidad(id_grace) == 1
+    assert t.muro_cantidad(id_barbara) == 101
 
-    # verificamos que cada uno de los pixels tiene el valor asignado
-    for x in range(30):
-        for y in range(60):
-            assert img.get(x, y) == color
+    # obtenemos un tuit en el medio del muro de Barbara
+    id_tuit_barbara = t.muro_id_tuit(id_barbara, 50)
+    assert id_tuit_barbara is not None
 
-    # verificamos que set() aplica restricción de rango
-    img.set(10, 10, (256, -1, -3))
-    assert img.get(10, 10) == (255, 0, 0)
+    assert t.tuit_id_autor(id_tuit_barbara) == id_barbara
+    assert t.tuit_mensaje(id_tuit_barbara) == "Este es mi tuit nro 50"
 
+    # Grace comparte el tuit
+    ok = t.compartir(id_tuit_barbara, id_grace)
+    assert ok
+
+    assert t.muro_cantidad(id_grace) == 2
+    assert t.muro_cantidad(id_barbara) == 101
 
 def ejercicio_2():
+
     # función auxiliar
-    def _verificar_ppm(ruta, esperado):
-        esperado = _quitar_sangria(esperado)
+    def _verificar_csv(ruta, contenido_esperado):
+        # quitamos la sangría y líneas vacías
+        contenido_esperado = ''.join([l.strip() + '\n' for l in contenido_esperado.split('\n') if l.strip()])
+
         with open(ruta) as f:
-            obtenido = f.read()
-        lesp = [l.strip() for l in esperado.split('\n') if l.strip()]
-        lobt = [l.strip() for l in obtenido.split('\n') if l.strip()]
-        assert len(lesp) == len(lobt), \
-            f"El archivo PPM no es correcto (diferencia en la cantidad de líneas)\n" + \
-            f"esperado:\n{esperado}\n" + \
-            f"obtenido:\n{obtenido}"
-        for i, (l1, l2) in enumerate(zip(lesp, lobt)):
-            assert l1.split() == l2.split(), \
-                f"El archivo PPM no es correcto (diferencia en la línea {i + 1}):\n" + \
-                f"esperado:\n{esperado}\n" + \
-                f"obtenido:\n{obtenido}"
+            contenido = f.read()
+            assert contenido == contenido_esperado, f"\n         contenido={contenido}\ncontenido_esperado={contenido_esperado}"
 
-    img = imagen.Imagen(255, 4, 5)
+    t = tuiter.Tuiter()
 
-    # pintamos la imagen con un patrón arbitrario
-    for x in range(4):
-        for y in range(5):
-            color = (x, y, x * x * y * y) # (r, g, b)
-            img.set(x, y, color)
+    # creamos 2 autores
+    id_grace = t.crear_autor("Grace")
+    id_barbara = t.crear_autor("Barbara")
 
-    # escribimos la imagen en formato PPM
-    img.escribir_ppm("imagen.ppm")
+    # escribimos el muro de barbara (vacío) en un CSV
+    t.muro_escribir_csv(id_barbara, "muro_barbara.csv")
 
-    # verificamos el contenido del archivo
-    _verificar_ppm("imagen.ppm", """
-        P3
-        4 5
-        255
-        0 0 0   1 0  0   2 0  0   3 0   0
-        0 1 0   1 1  1   2 1  4   3 1   9
-        0 2 0   1 2  4   2 2 16   3 2  36
-        0 3 0   1 3  9   2 3 36   3 3  81
-        0 4 0   1 4 16   2 4 64   3 4 144
+    # el CSV solo debería tener la cabecera
+    _verificar_csv("muro_barbara.csv", """
+        autor|mensaje
+    """)
+
+    id_tuit_grace = t.publicar(id_grace, "Hola, soy Grace")
+
+    t.publicar(id_barbara, "Hola, soy Barbara")
+    ok = t.compartir(id_tuit_grace, id_barbara)
+
+    # escribimos el muro de barbara (que tiene 2 tuits) en un CSV
+    t.muro_escribir_csv(id_barbara, "muro_barbara.csv")
+
+    _verificar_csv("muro_barbara.csv", """
+        autor|mensaje
+        Barbara|Hola, soy Barbara
+        Grace|Hola, soy Grace
     """)
 
 def ejercicio_3():
-    with open("imagen.ppm", "w") as f:
-        f.write(_quitar_sangria("""
-            P3
-            4 5
-            255
-            0  0  0    0  0  0    0  0  0   15  0 15
-            0  0  0    0 15  7    0  0  0    0  0  0
-            0  0  0    0  0  0    0 15  7    0  0  0
-            15 0 15    0  0  0    0  0  0    0  0  0
-            15 0 15    0  0  0    0  0  0    0 15  0
-        """))
+    t = tuiter.Tuiter()
 
-    # leemos el archivo PPM
-    img = imagen.leer_ppm("imagen.ppm")
+    # creamos 2 autores
+    id_grace = t.crear_autor("Grace")
+    id_barbara = t.crear_autor("Barbara")
 
-    assert img.get_valor_max() == 255
-    assert img.get_ancho() == 4
-    assert img.get_alto() == 5
-    assert img.get(0, 0) == (0, 0, 0)
-    assert img.get(1, 1) == (0, 15, 7)
-    assert img.get(0, 4) == (15, 0, 15)
-    assert img.get(3, 4) == (0, 15, 0)
+    # grace publica 100 tuits
+    ids_tuits = []
+    for i in range(100):
+        id_tuit = t.publicar(id_grace, f"Tuit nro {i + 1}")
+        ids_tuits.append(id_tuit)
+
+    # Barbara comparte muchos tuits, muchas veces
+    compartidos = collections.Counter()
+    for i in range(1000):
+        id_tuit = random.choice(ids_tuits)
+        ok = t.compartir(id_tuit, id_barbara)
+        assert ok
+        compartidos.update((id_tuit,))
+
+    # obtenemos los IDs de los tuits ordenados por cantidad de veces que fueron compartidos
+    tuits_mas_compartidos = t.tuits_mas_compartidos()
+
+    resultado_esperado = compartidos.most_common()
+    assert sorted(tuits_mas_compartidos) == sorted(resultado_esperado), f"\ntuits_mas_compartidos={tuits_mas_compartidos}\n   resultado_esperado={resultado_esperado}"
 
 def ejercicio_4():
-    negro = (0, 0, 0)
-    blanco = (255, 255, 255)
-    rojo = (255, 0, 0)
-    verde = (0, 255, 0)
+    t = tuiter.Tuiter()
 
-    histograma_esperado = {
-        negro: 100,
-        rojo: 250,
-        verde: (100*100 - 100 - 200 - 250),
-        blanco: 200,
-    }
+    # creamos 2 autores
+    id_grace = t.crear_autor("Grace")
+    id_barbara = t.crear_autor("Barbara")
 
-    colores = sum([[color] * cantidad for color, cantidad in histograma_esperado.items()], [])
-    random.shuffle(colores)
+    # grace publica un tuit
+    id_tuit = t.publicar(id_grace, "Hola")
 
-    # creamos una imagen de 100 x 100 con un histograma arbitrario
-    img = imagen.Imagen(255, 100, 100)
-    for x in range(100):
-        for y in range(100):
-            color = (255 - x, y, x + y) # (r, g, b)
-            img.set(x, y, colores.pop())
-    assert len(colores) == 0
+    # grace no puede dar like a su propio tuit
+    ok = t.tuit_dar_like(id_tuit, id_grace)
+    assert not ok
+    assert not t.tuit_fue_likeado_por(id_tuit, id_grace)
 
-    h = img.histograma()
+    # barbara le da like
+    ok = t.tuit_dar_like(id_tuit, id_barbara)
+    assert ok
+    assert t.tuit_fue_likeado_por(id_tuit, id_barbara)
 
-    assert h == histograma_esperado, f"\nhistograma         ={h}\nhistograma esperado={histograma_esperado}"
+    # barbara no puede darle like dos veces
+    ok = t.tuit_dar_like(id_tuit, id_barbara)
+    assert not ok
+    assert t.tuit_fue_likeado_por(id_tuit, id_barbara)
 
-    c = img.colores_mas_frecuentes()
+    # creamos 10000 autores, algunos le dan like al tuit
+    ids_autores = []
+    for i in range(10000):
+        id_autor = t.crear_autor(f"Autor nro {i + 1}")
+        ids_autores.append(id_autor)
 
-    c_esperado = [
-        (verde, 100*100 - 100 - 200 - 250),
-        (rojo, 250),
-        (blanco, 200),
-        (negro, 100),
-    ]
+        if random.randint(0, 1) == 1:
+            ok = t.tuit_dar_like(id_tuit, id_autor)
+            assert ok
 
-    assert c == c_esperado, f"\colores         ={h}\colores esperado={histograma_esperado}"
-
-    assert img.promedio() == (11, 246, 5)
+    # verificamos que tuit_fue_likeado_por es eficiente:
+    for i in range(100000):
+        id_autor = random.choice(ids_autores)
+        t.tuit_fue_likeado_por(id_tuit, id_autor)
 
 def ejercicio_5():
-    # función auxiliar
-    def _pintar_patron(img, patron):
-        for y, linea in enumerate(_quitar_sangria(patron).split('\n')):
-            for x, c in enumerate(linea):
-                color = (0, 0, 0) if c == '.' else (255, 255, 255)
-                img.set(x, y, color)
+    t = tuiter.Tuiter()
 
-    # función auxiliar
-    def _verificar_patron(img, patron):
-        for y, linea in enumerate(_quitar_sangria(patron).split('\n')):
-            for x, c in enumerate(linea):
-                color_esperado = (0, 0, 0) if c == '.' else (255, 255, 255)
-                color = img.get(x, y)
-                assert color == color_esperado, f"el pixel ({x}, {y}) debería ser color {color_esperado}, pero es {color}"
+    # creamos 2 autores
+    id_grace = t.crear_autor("Grace")
+    id_barbara = t.crear_autor("Barbara")
 
-    img = imagen.Imagen(255, 10, 10)
-    # pintamos una región "hueca". Los caracteres "." representan un pixel color negro,
-    # y "#" un pixel color blanco.
-    _pintar_patron(img, """
-        ........#.
-        ...######.
-        ...#......
-        ####..####
-        ......#...
-        ##...#....
-        .#...#....
-        .#..#.....
-        .##.#.....
-        ..#.#.....
-    """)
+    # grace publica un tuit
+    id_tuit = t.publicar(id_grace, "Hola")
 
-    # rellenamos de color blanco a partir del pixel (4, 5).
-    img.balde_de_pintura(4, 5, (255, 255, 255))
+    # el tuit no tiene respuestas
+    assert list(t.tuit_respuestas(id_tuit)) == []
 
-    _verificar_patron(img, """
-        ........##
-        ...#######
-        ...#######
-        ##########
-        #######...
-        ######....
-        .#####....
-        .####.....
-        .####.....
-        ..###.....
-    """)
+    # el tuit no es en respuesta de otro tuit
+    assert t.tuit_en_respuesta_de(id_tuit) is None
 
+    # la cantidad del hilo es 1
+    assert t.tuit_cantidad_hilo(id_tuit) == 1
 
-def _quitar_sangria(s):
-    "Función auxiliar. Quita la sangría del texto."
-    return ''.join([l.strip() + '\n' for l in s.split('\n') if l.strip()])
+    # barbara responde al tuit
+    id_respuesta = t.responder(id_tuit, id_barbara, f"Respuesta")
+
+    # el tuit se publica en el muro de barbara
+    assert t.muro_cantidad(id_barbara) == 1
+
+    # el tuit es en respuesta del tuit de grace
+    assert t.tuit_en_respuesta_de(id_respuesta) == id_tuit
+
+    # el tuit original tiene a id_respuesta entre sus respuestas
+    assert list(t.tuit_respuestas(id_tuit)) == [id_respuesta]
+
+    # la cantidad del hilo es 2
+    assert t.tuit_cantidad_hilo(id_tuit) == 2
+
+    # hay más respuestas
+    id_respuesta_2 = t.responder(id_respuesta, id_grace, f"Respuesta 2")
+    id_respuesta_3 = t.responder(id_respuesta_2, id_barbara, f"Respuesta 3")
+    # ojo, esta respuesta es al tuit original
+    id_respuesta_4 = t.responder(id_tuit, id_barbara, f"Otra Respuesta")
+
+    # la "forma" del hilo es:
+    # id_tuit
+    # | id_respuesta
+    # | | id_respuesta_2
+    # | | | id_respuesta_3
+    # | id_respuesta_4
+
+    # el tuit original tiene 2 respuestas
+    assert list(t.tuit_respuestas(id_tuit)) == [id_respuesta, id_respuesta_4]
+
+    # la cantidad del hilo es 5
+    assert t.tuit_cantidad_hilo(id_tuit) == 5
 
 def main():
     ejercicios = [
