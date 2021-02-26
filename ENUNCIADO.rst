@@ -1,5 +1,5 @@
 =======================
-Examen final 2020-09-07
+Examen final 2021-02-01
 =======================
 
 --------------------------------------------------------
@@ -9,19 +9,19 @@ Examen final 2020-09-07
 Objetivo
 ========
 
-Implementar la clase ``Tuiter``, que permite modelar el funcionamiento de una plataforma
-sospechosamente similar a Twitter.
+Implementar la clase ``IMDB``, una base de datos de cine.
 
 Se dispone de los siguientes archivos:
 
-* ``tuiter.py``: implementación (inicialmente vacía) de la clase ``Tuiter``
+* ``imdb.py``: implementación (inicialmente vacía) de la clase ``IMDB``
 * ``pruebas.py``: Pruebas automáticas
 
 El archivo ``pruebas.py`` efectúa una serie de pruebas para verificar el correcto
-funcionamiento de la clase ``Tuiter``.
+funcionamiento de la clase ``IMDB``.
 
-La idea es agregar en ``tuiter.py`` todo el código necesario para que las
-pruebas automáticas pasen.
+La idea es agregar en ``imdb.py`` todo el código necesario para que las
+pruebas automáticas pasen. Además de las funciones que se piden en el enunciado
+se permite crear cualquier cantidad de funciones y clases internas.
 
 Hay 5 ejercicios. Es condición necesaria (pero no suficiente) para aprobar el
 examen que haya 3 ejercicios OK.
@@ -51,145 +51,187 @@ cantidad de ejercicios OK. Ejemplo:
     ejercicio_5: OK
     Cantidad de ejercicios OK: 4
 
-Recordar: es condición necesaria (pero no suficiente) para aprobar el examen
+Recordar: es condición necesaria[1]_ (pero no suficiente[2]_) para aprobar el examen
 que haya al menos 3 ejercicios OK.
 
-La clase Tuiter
-===============
+.. [1] Es posible que un ejercicio sea considerado "bien" aun cuando la prueba
+   informa "FAIL"; por ejemplo si hay un error trivial en el código que se
+   arreglaría haciendo un pequeño cambio.
 
-La clase ``Tuiter`` modela una plataforma de publicación de contenido (**tuits**)
-por parte de usuarios (**autores**).
+.. [2] Es posible (pero poco probable) que un ejercicio sea considerado "mal" aun cuando la prueba
+   informa "OK"; por ejemplo si hay errores conceptuales.
 
-Un **autor** tiene, como mínimo:
+La clase IMDB
+=============
 
-* Un número identificatorio único (el ID del autor)
-* Un nombre
-* Un **muro** (explicado abajo)
+La clase ``IMDB`` modela una base de datos de cine, y permite hacer consultas como búsqueda
+de actores y actrices, calificaciones de películas, etc.
 
-Un **tuit** tiene, como mínimo:
+La base de datos almacena información de **actores** y **films**:
 
-* Un número identificatorio único (el ID del tuit)
-* El ID del autor del tuit
-* Un mensaje
+* Un **actor** tiene:
+
+    * Un **nombre**
+    * Una **fecha de nacimiento** (año, mes, día)
+    * Un listado de films en los que participó (puede ser vacío, un film no puede aparecer 2 veces en el listado)
+
+* Un **film** tiene:
+
+    * Un **nombre**
+    * Una **fecha de lanzamiento** (año, mes, día)
+    * Un listado de actores que participaron en el film (puede estar vacío, un actor no puede aparecer 2 veces en el listado)
+    * Un listado de calificaciones recibidas, que son números entre 1 y 10. A partir de este listado se calculará un promedio.
 
 IDs
 ---
 
-Desde "afuera" de la implementación, tanto los tuits como los usuarios se
-identifican mediante sus IDs. Es decir, todas las operaciones reciben y
-devuelven IDs. La elección de estos IDs al crear usaurios/tuits queda a cargo
-de la clase ``Tuiter``.
+Desde "afuera" de la implementación, tanto los actores como los films se
+identifican mediante un número único llamado ID. Es decir, todas las
+operaciones reciben y devuelven IDs. La elección de estos IDs al crear
+actores/films queda a cargo de la clase ``IMDB``.
 
-Los IDs de los usuarios deben ser únicos, y lo mismo para los tuits, pero no
-hay problema en que un tuit y un autor tengan el mismo ID.
+Los IDs de los actores deben ser únicos, y lo mismo para los films, pero no hay
+problema en que un actor y un film tengan el mismo ID.
 
 **Recomendación:** usar números crecientes:
 
-* Creamos el primer autor -> ID = 0
-* Creamos el primer tuit -> ID = 0
-* Creamos el segundo autor -> ID = 1
-* Creamos el segundo tuit -> ID = 1
-* Creamos el tercer tuit -> ID = 2
+* Creamos el primer actor -> ID = 0
+* Creamos el primer film -> ID = 0
+* Creamos el segundo actor -> ID = 1
+* Creamos el segundo film -> ID = 1
+* Creamos el tercer film -> ID = 2
 
-El muro
--------
-
-Cada autor tiene un **muro** que es una secuencia de tuits (que pueden haber sido publicados
-por el mismo autor o no):
-
-* Al **publicar** un tuit, el tuit se agrega automáticamente al muro del autor.
-* Un autor puede **compartir** un tuit previamente publicado por otro autor. El tuit
-  se agrega al muro del autor que lo comparte.
-
-  * Un autor no puede compartir un tuit creado por sí mismo.
-  * El tuit puede ser compartido muchas veces por el mismo autor (siempre y
-    cuando no sea el autor del tuit).
+**Recomendación:** Notar que en la descripción de las entidades **actor** y
+**film**, se menciona que un actor tiene una lista de films, y al mismo tiempo
+un film tiene una lista de actores. Si lo tomamos en forma literal llegamos a
+una definición recursiva que es más complicada de lo necesario. En cambio,
+pensar que los actores y films pueden estar relacionados mediante listas de IDs
+(ej: un film puede tener una lista de IDs de actores).
 
 Descripción de las pruebas
 ==========================
 
-``ejercicio_1``: Publicar y compartir
-    Prueba el funcionamiento básico de ``Tuiter``. Sin esta prueba funcionando
+``ejercicio_1``:
+    Funcionamiento básico
+
+    Prueba el funcionamiento básico de la clase ``IMDB``. Sin esta prueba funcionando
     probablemente no se pueda pasar ninguna de las otras pruebas.
 
     Métodos a implementar:
 
-    * ``__init__``: Crea una instancia de Tuiter con 0 autores y 0 tuits.
-    * ``crear_autor``: Recibe un nombre, y crea un nuevo autor con un ID único
-      (es decir, no puede ser igual al ID de otro autor ya existente) y el
-      nombre especificado. Devuelve el ID del autor.
-    * ``publicar``: Recibe el ID de un autor y un mensaje, y crea un nuevo tuit
-      con un ID único (es decir, no puede ser igual al ID de otro tuit ya existente),
-      el autor y el mensaje especificados. Agrega el tuit al muro del autor. Devuelve
-      el ID del tuit.
-    * ``compartir``: Recibe el ID de un tuit y el ID de un autor. Si el tuit
-      puede ser compartido por el autor lo agrega al muro de ese autor y
-      devuelve ``True``.  Devuelve ``False`` en caso contrario.
-    * ``tuit_id_autor``: Recibe el ID de un tuit, y devuelve el ID de su autor.
-    * ``tuit_mensaje``: Recibe el ID de un tuit, y devuelve el mensaje del tuit.
-    * ``muro_cantidad``: Recibe el ID de un autor, y devuelve la cantidad de
-      tuits que contiene el muro de ese autor.
-    * ``muro_id_tuit``: Recibe el ID de un autor y una posición ``p`` (entero
-      no negativo).  Devuelve el ID del tuit que está en la posición ``p`` en
-      el muro del autor (según el orden en que fueron agregados al muro). Es
-      decir, si ``p = 0`` devuelve el ID del primer tuit agregado al muro, si
-      ``p = 1`` el segundo tuit, etc.
+    * ``__init__()``: Crea una instancia de ``IMDB`` con 0 actores y 0 films.
 
-``ejercicio_2``: CSV
-    Prueba que los tuits de un muro puedan ser guardados en un archivo CSV.
+    * ``actor_agregar(nombre, año, mes, dia)``: Recibe el nombre y la fecha de
+      nacimiento de un actor o actriz, y lo agrega a la base de datos.
+      Devuelve el ID del actor, que debe ser distinto a los IDs de los otros actores existentes.
 
-    Métodos a implementar:
+    * ``cantidad_actores()``: Devuelve la cantidad de actores existentes en la base de datos.
 
-    * ``muro_escribir_csv``: Recibe el ID de un autor y el nombre de un archivo.
-      Escribe en el archivo el contenido de todos los tuits del muro del autor,
-      con formato ``autor|mensaje`` (incluyendo la cabecera).
+    * ``actor_nombre(id_actor)``: recibe el ID de un actor y devuelve su nombre.
 
-``ejercicio_3``: Tuits más compartidos
-    Prueba que podamos obtener los IDs de los tuits ordenados por cantidad de
-    veces que fueron compartidos.
+    * ``actor_nacimiento(id_actor)``: recibe el ID de un actor y devuelve su fecha de nacimiento
+      (tupla ``(año, mes, día)``).
 
-    Métodos a implementar:
+    * ``film_agregar(nombre, año, mes, dia, ids_actores)``: Recibe el nombre,
+      la fecha de lanzamiento y una lista de IDs de actores que participaron en un film,
+      y agrega el film a la base de datos.
+      Devuelve el ID del film, que debe ser distinto a los IDs de los otros films existentes.
 
-    * ``tuits_mas_compartidos``: Devuelve una lista de tuplas, en la que cada tupla tiene la
-      forma ``(id_tuit, cantidad)``, donde ``cantidad`` es la cantidad de veces que el tuit
-      fue compartido. La lista está ordenada por ``cantidad`` en forma descendente, es decir
-      el tuit más compartido primero.
+    * ``cantidad_films()``: Devuelve la cantidad de films existentes en la base de datos.
 
-``ejercicio_4``: Likes
-    Prueba que los tuits puedan ser "likeados".
+    * ``film_nombre(id_film)``: recibe el ID de un film y devuelve su nombre.
 
-    * Un tuit puede ser likeado por cualquier autor menos el autor del tuit.
-    * Un tuit no puede ser likeado más de una vez por el mismo autor.
+    * ``film_lanzamiento(id_film)``: recibe el ID de un film y devuelve su fecha de lanzamiento
+      (tupla ``(año, mes, día)``).
 
-    Métodos a implementar:
+    * ``film_actores(id_film)``: recibe el ID de un film y devuelve la lista de IDs de los
+      actores que participaron en el mismo.
 
-    * ``tuit_dar_like``: Recibe el ID de un tuit y el ID de un autor. Si el tuit puede ser likeado
-      por el autor, le da like y devuelve ``True``. En caso contrario devuelve ``False``.
-    * ``tuit_fue_likeado_por``: Recibe el ID de un tuit y el ID de un autor. Devuelve ``True`` o
-      ``False`` según si el tuit ya fue likeado por el autor o no.
+    * ``actor_films(id_actor)``: recibe el ID de un actor y devuelve la lista de IDs de los
+      films en los que participó.
 
-``ejercicio_5``: Hilos
-    Pueba el mecanismo de respuestas de tuits.
+``ejercicio_2``:
+    Archivos CSV
 
-    * Un autor puede publicar un tuit **en respuesta de** otro tuit ya existente,
-      generando así un **hilo**.
-    * Los hilos no son lineales sino que pueden tener forma de árbol: hay un tuit que es
-      la raíz o el tronco del árbol y luego hay respuestas que son las ramificaciones;
-      y cada respuesta a su vez puede tener más respuestas.
+    Prueba que podamos exportar la base de datos en formato CSV.
 
-    Métodos a implementar:
+    Funciones a implementar:
 
-    * ``responder``: Recibe el ID de un tuit, el ID de un autor y un mensaje, y
-      publica un nuevo tuit en respuesta del tuit indicado. El nuevo tuit
-      tendrá el autor y mensaje indicados y se agregará al muro del autor,
-      igual que ``publicar``.
-    * ``tuit_respuestas``: Recibe el ID de un tuit y devuelve la lista de IDs de los tuits
-      que son respuestas inmediatas (es decir, no incluye los tuits que son respuestas de
-      respuestas).
-    * ``tuit_en_respuesta_de``: Recibe el ID de un tuit. Si el tuit es la raíz de un hilo,
-      devuelve ``None`` ya que no es en respuesta de ningún otro tuit. En caso contrario,
-      devuelve el ID del tuit que responde.
-    * ``tuit_cantidad_hilo``: Recibe el ID de un tuit, y devuelve la
-      **cantidad** del hilo que tiene como raíz el tuit indicado. Es decir, la
-      cantidad de tuits en total contando el tuit y todas sus respuestas, en
-      forma recursiva.
+    * ``escribir_csv()``: Escribe tres archivos CSV, todos sin encabezado:
+
+        * ``actores.csv`` con formato ``id,nombre,año,mes,día``
+        * ``films.csv`` con formato ``id,nombre,año,mes,día``
+        * ``films_actores.csv`` con formato ``id_film,id_actor``. Cada una de
+          las líneas de este archivo representa una relación "tal actor trabajó en tal film".
+
+``ejercicio_3``:
+    Agrupamiento de films por décadas
+
+    Funciones a implementar:
+
+    * ``films_decadas()``: Devuelve un diccionario ``{década: <lista de IDs de films>}``
+
+    La década de un año es el mayor múltiplo de 10 que es menor o igual al año. Ejemplos:
+
+    * ``decada(1983) -> 1980``
+    * ``decada(2015) -> 2010``
+    * ``decada(2010) -> 2010``
+    * ``decada(1999) -> 1990``
+
+``ejercicio_4``:
+    Calificaciones
+
+    Funciones a implementar:
+
+    * ``calificar(id_film, calificación)``: Agrega la calificación (número entre 1 y 10) al film dado.
+
+    * ``film_promedio(id_film)``: Devuelve la calificación promedio del film. En caso de que
+      el film no haya recibido ninguna calificación, devuelve 0.
+
+    * ``films_top10()`` Devuelve la lista de los IDs de los 10 films con mejor promedio, ordenada
+      de mayor a menor según el promedio.
+
+``ejercicio_5``:
+    Distancia entre actores
+
+    Funciones a implementar:
+
+    * ``distancia(id_actor1, id_actor2)``: Devuelve la distancia entre los actores dados.
+
+    Dados dos actores o actrices, podemos intentar trazar un camino según las películas en las que
+    actuaron; y definimos la **distancia** entre dos actores como **la longitud del camino
+    mínimo** entre ellos.
+
+    Por ejemplo, si tenemos las siguientes películas:
+
+    * *Nueve Reinas* (Leticia Brédice, Gastón Pauls, Ricardo Darín)
+    * *Relatos salvajes*, (Rita Cortese, Ricardo Darín)
+
+    Podemos obtener las siguientes distancias:
+
+    * ``distancia(Ricardo Darín, Ricardo Darín) -> 0`` (por definición)
+    * ``distancia(Ricardo Darín, Gastón Pauls) -> 1`` (porque trabajaron juntos en *Nueve Reinas*)
+    * ``distancia(Leticia Brédice, Rita Cortese) -> 2`` (porque Brédice trabajó con Darín en *Nueve Reinas*, y Darín con Cortese en *Relatos Salvajes*)
+
+    Ayuda: una forma de implementar esta función es mediante el algoritmo de *búsqueda en anchura*
+    (*breadth first search* en inglés), que en pseudocódigo sería así::
+
+        algoritmo distancia(A, B):
+            Sea visitados := conjunto de actores visitados
+            Sea Q := cola de tuplas (actor, distancia)
+
+            visitados.agregar(A)  # marcamos A como visitado
+            Q.encolar((A, 0))     # encolamos A con distancia 0
+
+            mientras Q no está vacía:
+                (V, D) = Q.desencolar()  # El actor V está a distancia D
+                si V == B:               # V es el actor que estamos buscando?
+                    return D
+                por cada film en el que trabajó V:
+                    por cada actor W que trabajó en ese film:
+                        si W no está en visitados:
+                            visitados.agregar(W)  # marcamos W como visitado
+                            Q.append((W, D + 1))  # encolamos W con distancia D + 1
+
+    Nota: no es necesario implementar una clase ``Cola``, se permite utilizar una lista de Python
+    o cualquier otra estructura de la biblioteca estándar.
