@@ -1,5 +1,5 @@
 =======================
-Examen final 2020-10-03
+Examen final 2020-09-25
 =======================
 
 --------------------------------------------------------
@@ -9,20 +9,18 @@ Examen final 2020-10-03
 Objetivo
 ========
 
-Implementar la clase ``AeroDB``, una base de datos de aeropuertos y rutas aéreas
-de todo el mundo.
+Implementar la clase ``Editor``, que representa el estado de un editor de texto.
 
 Se dispone de los siguientes archivos:
 
-* ``aerodb.py``: implementación (inicialmente vacía) de la clase ``AeroDB``
+* ``editor.py``: implementación (inicialmente vacía) de la clase ``Editor``
 * ``pruebas.py``: Pruebas automáticas
-* ``aeropuertos.csv``: CSV con datos de aeropuertos de todo el mundo
-* ``rutas.csv``: CSV con datos de rutas aéreas
+* ``texto.txt``: Un archivo de texto
 
 El archivo ``pruebas.py`` efectúa una serie de pruebas para verificar el correcto
-funcionamiento de la clase ``AeroDB``.
+funcionamiento de la clase ``Editor``.
 
-La idea es agregar en ``aerodb.py`` todo el código necesario para que las
+La idea es agregar en ``editor.py`` todo el código necesario para que las
 pruebas automáticas pasen.
 
 Hay 5 ejercicios. Es condición necesaria (pero no suficiente) para aprobar el
@@ -53,164 +51,140 @@ cantidad de ejercicios OK. Ejemplo:
     ejercicio_5: OK
     Cantidad de ejercicios OK: 4
 
-Recordar: es condición necesaria[1]_ (pero no suficiente[2]_) para aprobar el examen
+Recordar: es condición necesaria (pero no suficiente) para aprobar el examen
 que haya al menos 3 ejercicios OK.
 
-.. [1] Es posible que un ejercicio sea considerado "bien" aun cuando la prueba
-   informa "FAIL"; por ejemplo si hay un error trivial en el código que se
-   arreglaría haciendo un pequeño cambio.
-
-.. [2] Es posible (pero poco probable) que un ejercicio sea considerado "mal" aun cuando la prueba
-   informa "OK"; por ejemplo si hay errores conceptuales.
-
-La clase AeroDB
+La clase Editor
 ===============
 
-La clase ``AeroDB`` modela una base de datos de aeropuertos y rutas aéreas.
+La clase ``Editor`` modela el estado interno de un editor de texto (pensar en cualquier editor
+de texto plano: Bloc de notas, Gedit, VSCode, Sublime, etc).
 
-* Un **aeropuerto** tiene:
+* El **editor** mantiene el contenido de un archivo de **texto**, que se va modificando a medida que
+  el usuario hace acciones.
+* El texto conceptualmente está formado por una secuencia de **líneas**.
+* Una **línea** es básicamente una secuencia de caracteres que termina con el caracter ``'\n'``, y no
+  contiene ningún caracter ``'\n'`` en el medio.
+* El editor siempre tiene **al menos una línea** de texto.
+* Cada línea puede tener una longitud arbitrariamente grande, e independiente de las otras líneas.
+  Cada línea tiene **al menos un caracter** (ya que el ``'\n'`` debe estar siempre como último caracter).
 
-    * Una **designación** única llamada `"código IATA" <https://es.wikipedia.org/wiki/C%C3%B3digo_de_aeropuertos_de_IATA>`_,
-      formada por 3 letras. Ejemplo: "EZE".
-    * Un **nombre**. Ejemplo: "Ministro Pistarini International Airport".
-    * Una **ciudad**. Ejemplo: "Buenos Aires".
-    * Un **país**. Ejemplo: "Argentina".
-    * Una **ubicación**, indicada en forma de coordenadas geodésicas (**latitud** y **longitud**).
-
-La designación del aeropuerto es única; es decir que no hay dos aeropuertos con la misma
-designación; y la misma se utiliza para identificar al aeropuerto.
-
-* Una **ruta aérea** tiene:
-
-    * Un **código de vuelo**. Ejemplo: "AR412".
-    * Un aeropuerto de **origen** (indicado por su designación). Ejemplo: "EZE".
-    * Un aeropuerto de **destino** (indicado por su designación). Ejemplo: "BRC".
-
-La terna de ``(código, origen, destino)`` identifica unívocamente a la ruta.
-Ejemplo: La ruta ``(AR412, EZE, BRC)`` no puede estar duplicada; pero sí puede
-existir al mismo tiempo una ruta ``(AR412, BRC, EZE)``.
+* El editor además maneja el estado del **cursor**, que indica la posición en la que el usuario
+  insertará los caracteres al escribir.
+* La posición del cursor está dada por un número de **línea** y un número de **columna**.
+* Las líneas y columnas se cuentan a partir de 1.
+  Es decir que si el texto tiene 10 líneas, se numeran de 1 a 10, y si una
+  línea tiene 15 caracteres (incluyendo el ``'\n'`` final), las columnas en esa
+  línea se numeran del 1 al 15, siendo la columna 15 la correspondiente al
+  ``'\n'``.
 
 Descripción de las pruebas
 ==========================
 
 ``ejercicio_1``:
-    Funcionamiento básico
-
-    Prueba el funcionamiento básico de la clase ``AeroDB``. Sin esta prueba funcionando
+    Prueba el funcionamiento básico de la clase ``Editor``. Sin esta prueba funcionando
     probablemente no se pueda pasar ninguna de las otras pruebas.
 
     Métodos a implementar:
 
-    * ``__init__``: Crea una instancia de ``AeroDB`` con 0 aeropuertos y 0 rutas.
+    * ``__init__``: Recibe una cadena de texto correspondiente al contenido completo del archivo.
+      Crea una instancia del ``Editor`` con el contenido del archivo y el cursor en la posición
+      ``(1, 1)`` (primera línea, primer caracter).
 
-    * ``aeropuerto_agregar``: Recibe la designación, el nombre, la ciudad, el pais, y las coordenadas
-      (latitud y longitud) de un aeropuerto, y lo agrega a la base de datos.
+      Notar que la cadena recibida puede no cumplir con las restricciones que impone el editor.
+      El editor se debe encargar de agregar lo necesario para cumplirlas:
 
-    * ``cantidad_aeropuertos``: Devuelve la cantidad de aeropuertos existentes en la base de datos.
+      * La cadena puede estar vacía. El editor debe siempre tener al menos una línea de texto.
+      * La última línea de la cadena puede no terminar con ``'\n'``. Dicho caracter debe ser agregado
+        en el editor.
 
-    * ``aeropuerto_get_nombre``, ``aeropuerto_get_ciudad``, ``aeropuerto_get_pais``: Reciben
-      la designación de un aeropuerto y devuelven respectivamente el nombre, la ciudad y el
-      país del aeropuerto correspondiente.
+    * ``cantidad_lineas``: Devuelve la cantidad de líneas que contiene el texto.
 
-    * ``aeropuerto_get_coords``: Recibe la designación de un aeropuerto y devuelve una tupla
-      con la latitud y la longitud del mismo.
+    * ``__str__``: Devuelve una cadena conteniendo el texto completo.
 
-    * ``ruta_agregar``: Recibe un código de vuelo y las designaciones de los aeropuertos origen y
-      destino. Agerga la ruta a la base de datos.
+    * ``leer_archivo``: Recibe la ruta de un archivo de texto y devuelve una instancia de
+      ``Editor`` con el contenido del archivo.
 
-    * ``cantidad_rutas``: Devuelve la cantidad de rutas existentes en la base de datos.
+      Nota: esta es una función suelta, no es un método de ``Editor``.
+
+    * ``escribir_archivo``: Recibe la ruta de un archivo y escribe en el mismo el texto completo.
 
 ``ejercicio_2``:
-    Búsqueda de rutas
+    Prueba el movimiento del cursor, que ocurre cuando el usuario presiona las teclas de dirección
+    del teclado.
 
-    Prueba que podamos listar todas las rutas que salen de una ciudad y que llegan a una ciudad.
+    Importante: en ningún caso el cursor puede quedar posicionado en un lugar inválido (línea o
+    columna fuera de rango). Siempre que el usuario intente moverse fuera de los límites del texto, se
+    hará alguna corrección para que el cursor quede en una posición válida.
 
-    * ``rutas_desde_ciudad``: Recibe el nombre de una ciudad, y devuelve la lista de las rutas
-      cuyo aeropuerto de origen corresponde a la ciudad indicada.
+    Métodos a implementar:
 
-    * ``rutas_hacia_ciudad``: Recibe el nombre de una ciudad, y devuelve la lista de las rutas
-      cuyo aeropuerto de destino corresponde a la ciudad indicada.
+    * ``cursor_pos``: Devuelve una tupla con el número de línea y columna del cursor.
 
-    Ambas funciones devuelven una lista de rutas, y el formato de cada ruta
-    debe ser una tupla ``(código, origen, destino)``.
+    * ``cursor_caracter``: Devuelve el caracter sobre el cual el cursor está posicionado.
+
+    * ``mover_derecha``: Mueve el cursor un caracter hacia la derecha.
+
+      Si el cursor estaba en el último caracter de la línea, se moverá al
+      primer caracter de la línea siguiente (en caso de ser posible).
+
+    * ``mover_izquierda``: Mueve el cursor un caracter hacia la izquierda.
+
+      Si el cursor estaba en el primer caracter de la línea, se moverá al
+      último caracter de la línea anterior (en caso de ser posible).
+
+    * ``mover_arriba``: Mueve el cursor un caracter hacia arriba.
+
+      Si la línea de arriba es más corta que el número de columna actual, se posiciona
+      el cursor en el último caracter.
+
+    * ``mover_abajo``: Mueve el cursor un caracter hacia abajo.
+
+      Si la línea de abajo es más corta que el número de columna actual, se posiciona
+      el cursor en el último caracter.
+
+    * ``mover_a``: Recibe un número de línea y columna y mueve el cursor a esa posición.
+
+      Si la línea y/o columna están fuera de los límites, se ajustarán para que el cursor quede
+      en una posición válida.
 
 ``ejercicio_3``:
-    Cargar CSV
+    Prueba que el usuario pueda escribir texto y que el mismo se inserte en el lugar adecuado.
 
-    Prueba que podamos cargar la base de datos completa a partir de dos archivos CSV (uno
-    para los aeropuertos y otro para las rutas), y que podamos averiguar cuál es el aeropuerto
-    con más rutas del mundo.
+    Nota: este ejercicio depende de que el cursor funcione, aunque solo es necesario hacer una
+    implementación básica de la función ``mover_a`` del ejercicio 2.
 
-    Funciones a implementar:
+    Métodos a implementar:
 
-    * ``cargar``: Recibe las rutas de los archivos CSV correspondientes a los listados de
-      aeropuertos y rutas. Devuelve una instancia de ``AeroDB`` conteniendo toda la información
-      de los archivos.
+    * ``insertar``: Recibe una cadena de texto que representa una secuencia de caracteres ingresados
+      mediante el teclado. Por cada caracter, el mismo es insertado en la posición del cursor, y
+      el cursor avanza una posición hacia la derecha.
 
-      Nota: ``cargar`` es una función suelta, no es un método de ``AeroDB``.
-
-      El CSV de aeropuertos tiene el formato ``designación|nombre|ciudad|país|latitud|longitud``
-      (sin cabecera).
-
-      El CSV de rutas tiene el formato ``codigo|origen|destino`` (sin cabecera).
-
-    * ``aeropuerto_con_mas_rutas``: Devuelve una tupla ``(designación, cantidad)``, donde
-      ``designación`` es la designación del aeropuerto que sirve más rutas, y ``cantidad``
-      es la cantidad de rutas correspondientes a ese aeropuerto.
-
-      Un aeropuerto sirve una ruta tanto si es el origen o destino de la misma. Dicho de otra
-      manera, una ruta que va de A a B es una ruta de ambos aeropuertos A y B.
+      Algunos de los caracteres ingresados pueden ser ``\n``, el cual luego de
+      ser insertado divide la línea actual en dos líneas; todos los caracteres
+      a la derecha del cursor pasan a formar una línea nueva abajo de la línea
+      actual, y el cursor se posiciona al inicio de la misma.
 
 ``ejercicio_4``:
-    Ordenar aeropuertos
+    Palabras más frecuentes
 
-    Funciones a implementar:
+    Métodos a implementar:
 
-    * ``aeropuertos_ordenados_por_distancia``: Recibe una latitud y una longitud, y devuelve
-      la lista de designaciones de todos los aeropuertos, ordenada según la distancia de cada
-      aeropuerto al punto indicado (el aeropuerto más cercano primero).
+    * ``palabras_mas_frecuentes``: Devuelve una lista de tuplas ``(palabra, cantidad)``, ordenada
+      de mayor a menor por ``cantidad``, indicando todas las palabras contenidas en el texto, y
+      la cantidad de veces que aparece cada una.
 
-      Nota: el cálculo de distancias con coordenadas geodésicas no es trivial; a los efectos de este
-      ejercicio vamos a simplificar y calcularlas como si fueran coordenadas cartesianas en un plano.
-      Si :math:`x` es la latitud e :math:`y` es la longitud:
+      Una palabra se considera como cualquier secuencia de caracteres consecutivos que no
+      incluyen el caracter ``'\n'`` o un espacio.
 
-      .. math:: d((x_1, y_1), (x_2, y_2)) = \sqrt{(x_1 - x_2)^2 + (y_1 - y_2)^2}
+      Por ejemplo, en la cadena ``'  hola,    que\n tal\n'``, las palabras son ``'hola,'`` (notar que
+      la coma se considera parte de la palabra), ``'que'``, ``'tal'``.
 
 ``ejercicio_5``:
-    Itinerario
+    Buscar
 
-    Si queremos viajar de la ciudad A a la ciudad B, es posible que no exista una ruta
-    ``(*, A, B)`` que cubra el viaje en un tramo.
-    Sin embargo, podemos buscar un *itinerario*, formado por una secuencia de
-    rutas que permitan viajar de A a B haciendo escalas en otras ciudades, por ejemplo
-    ``(*, A, C) -> (*, C, D) -> (*, D, B)``.
+    Métodos a implementar:
 
-    Funciones a implementar:
+    * ``buscar``: Recibe una cadena que no incluye ``'\n'``. Devuelve una lista de tuplas
+      ``(linea, columna)`` con todas las posiciones en el texto en las que se encuentra la cadena.
 
-    * ``armar_itinerario``: Recibe los nombres de las ciudades de origen y destino, y devuelve
-      una lista con las rutas que forman un itinerario posible entre dichas ciudades, de la forma
-      ``[(código_0, origen, destino_0), ..., (código_n, origen_n, destino)]``.
-
-      Devuelve ``None`` si no hay ningún itinerario posible entre ambas ciudades.
-
-      Si hay más de un itinerario posible, es indistinto cuál de ellos es devuelto.
-
-    Ayuda: una forma de implementar esta función es mediante el algoritmo de *backtracking*.
-    Este algoritmo es recursivo. En cada paso necesitamos:
-
-    * una lista ``R`` de rutas que conforman un itinerario posible a partir de la ciudad origen
-    * un conjunto ``V`` de ciudades visitadas
-
-    Descripción del algoritmo:
-
-        Sea ``C`` la ciudad de destino de la última ruta de ``R`` (o la ciudad
-        origen si el itinerario ``R`` está vacío). Esta es la ciudad en la que estamos "parados"
-        actualmente.
-
-        Agregamos ``C`` al conjunto de ciudades visitadas ``V``.
-
-        Si ``C`` es la ciudad destino, ``R`` es un itinerario que resuelve el problema.
-
-        En caso contrario, para cada ruta ``r`` existente con origen ``C``, y con
-        un destino no visitado aun, llamamos recursivamente al algoritmo, con ``R
-        = R + [r]``.
