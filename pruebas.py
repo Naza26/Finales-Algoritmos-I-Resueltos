@@ -1,224 +1,168 @@
 import traceback
-import collections
 import random
-
-import tuiter
+import csv
+import imdb
 
 def ejercicio_1():
-    t = tuiter.Tuiter()
+    i = imdb.IMDB()
 
-    # creamos 2 autores
-    id_grace = t.crear_autor("Grace")
-    id_barbara = t.crear_autor("Barbara")
-    assert id_grace is not None
-    assert id_barbara is not None
-    assert id_grace != id_barbara
+    id_bredice = i.actor_agregar("Leticia Brédice", 1972, 8, 26)
+    id_darin = i.actor_agregar("Ricardo Darín", 1957, 1, 16)
+    id_pauls = i.actor_agregar("Gastón Pauls", 1972, 1, 17)
+    id_villamil = i.actor_agregar("Solead Villamil", 1969, 6, 19)
 
-    # ambos tienen 0 mensajes en su muro
-    assert t.muro_cantidad(id_grace) == 0
-    assert t.muro_cantidad(id_barbara) == 0
+    # verificamos que los IDs son únicos
+    assert len({id_bredice, id_darin, id_pauls, id_villamil}) == 4
+    assert i.cantidad_actores() == 4
+    assert i.actor_nombre(id_darin) == "Ricardo Darín"
+    assert i.actor_nacimiento(id_pauls) == (1972, 1, 17)
 
-    # Grace publica un tuit
-    id_tuit_grace = t.publicar(id_grace, "Hola, soy Grace")
-    assert id_tuit_grace is not None
+    id_9reinas = i.film_agregar("Nueve Reinas", 2000, 8, 31, [id_bredice, id_darin, id_pauls])
+    id_secreto = i.film_agregar("El secreto de sus ojos", 2009, 5, 21, [id_darin, id_villamil])
 
-    assert t.tuit_id_autor(id_tuit_grace) == id_grace
-    assert t.tuit_mensaje(id_tuit_grace) == "Hola, soy Grace"
+    assert id_9reinas != id_secreto
+    assert i.cantidad_films() == 2
+    assert i.film_nombre(id_9reinas) == "Nueve Reinas"
+    assert i.film_lanzamiento(id_secreto) == (2009, 5, 21)
+    assert set(i.film_actores(id_secreto)) == {id_darin, id_villamil}
 
-    # El tuit fue publicado en el muro de Grace
-    assert t.muro_cantidad(id_grace) == 1
-    assert t.muro_cantidad(id_barbara) == 0
-
-    # Grace no puede compartir su propio tuit
-    ok = t.compartir(id_tuit_grace, id_grace)
-    assert not ok
-
-    # Barbara comparte el tuit
-    ok = t.compartir(id_tuit_grace, id_barbara)
-    assert ok
-
-    assert t.muro_cantidad(id_grace) == 1
-    assert t.muro_cantidad(id_barbara) == 1
-
-    # barbara publica 100 tuits
-    for i in range(100):
-        t.publicar(id_barbara, f"Este es mi tuit nro {i + 1}")
-
-    assert t.muro_cantidad(id_grace) == 1
-    assert t.muro_cantidad(id_barbara) == 101
-
-    # obtenemos un tuit en el medio del muro de Barbara
-    id_tuit_barbara = t.muro_id_tuit(id_barbara, 50)
-    assert id_tuit_barbara is not None
-
-    assert t.tuit_id_autor(id_tuit_barbara) == id_barbara
-    assert t.tuit_mensaje(id_tuit_barbara) == "Este es mi tuit nro 50"
-
-    # Grace comparte el tuit
-    ok = t.compartir(id_tuit_barbara, id_grace)
-    assert ok
-
-    assert t.muro_cantidad(id_grace) == 2
-    assert t.muro_cantidad(id_barbara) == 101
+    assert set(i.actor_films(id_darin)) == {id_9reinas, id_secreto}
+    assert set(i.actor_films(id_bredice)) == {id_9reinas}
 
 def ejercicio_2():
+    i = imdb.IMDB()
 
-    # función auxiliar
-    def _verificar_csv(ruta, contenido_esperado):
-        # quitamos la sangría y líneas vacías
-        contenido_esperado = ''.join([l.strip() + '\n' for l in contenido_esperado.split('\n') if l.strip()])
+    id_bredice = i.actor_agregar("Leticia Brédice", 1972, 8, 26)
+    id_darin = i.actor_agregar("Ricardo Darín", 1957, 1, 16)
+    id_pauls = i.actor_agregar("Gastón Pauls", 1972, 1, 17)
+    id_villamil = i.actor_agregar("Solead Villamil", 1969, 6, 19)
 
-        with open(ruta) as f:
-            contenido = f.read()
-            assert contenido == contenido_esperado, f"\n         contenido={contenido}\ncontenido_esperado={contenido_esperado}"
+    id_9reinas = i.film_agregar("Nueve Reinas", 2000, 8, 31, [id_bredice, id_darin, id_pauls])
+    id_secreto = i.film_agregar("El secreto de sus ojos", 2009, 5, 21, [id_darin, id_villamil])
 
-    t = tuiter.Tuiter()
+    i.escribir_csv()
 
-    # creamos 2 autores
-    id_grace = t.crear_autor("Grace")
-    id_barbara = t.crear_autor("Barbara")
-
-    # escribimos el muro de barbara (vacío) en un CSV
-    t.muro_escribir_csv(id_barbara, "muro_barbara.csv")
-
-    # el CSV solo debería tener la cabecera
-    _verificar_csv("muro_barbara.csv", """
-        autor|mensaje
-    """)
-
-    id_tuit_grace = t.publicar(id_grace, "Hola, soy Grace")
-
-    t.publicar(id_barbara, "Hola, soy Barbara")
-    ok = t.compartir(id_tuit_grace, id_barbara)
-
-    # escribimos el muro de barbara (que tiene 2 tuits) en un CSV
-    t.muro_escribir_csv(id_barbara, "muro_barbara.csv")
-
-    _verificar_csv("muro_barbara.csv", """
-        autor|mensaje
-        Barbara|Hola, soy Barbara
-        Grace|Hola, soy Grace
-    """)
+    verificar_csv('actores.csv', [
+        [id_bredice, "Leticia Brédice", 1972, 8, 26],
+        [id_darin, "Ricardo Darín", 1957, 1, 16],
+        [id_pauls, "Gastón Pauls", 1972, 1, 17],
+        [id_villamil, "Solead Villamil", 1969, 6, 19],
+    ])
+    verificar_csv('films.csv', [
+        [id_9reinas, "Nueve Reinas", 2000, 8, 31],
+        [id_secreto, "El secreto de sus ojos", 2009, 5, 21],
+    ])
+    verificar_csv('films_actores.csv', [
+        [id_9reinas, id_bredice],
+        [id_9reinas, id_darin],
+        [id_9reinas, id_pauls],
+        [id_secreto, id_darin],
+        [id_secreto, id_villamil],
+    ])
 
 def ejercicio_3():
-    t = tuiter.Tuiter()
+    i = imdb.IMDB()
 
-    # creamos 2 autores
-    id_grace = t.crear_autor("Grace")
-    id_barbara = t.crear_autor("Barbara")
+    id_bredice = i.actor_agregar("Leticia Brédice", 1972, 8, 26)
+    id_darin = i.actor_agregar("Ricardo Darín", 1957, 1, 16)
+    id_pauls = i.actor_agregar("Gastón Pauls", 1972, 1, 17)
+    id_villamil = i.actor_agregar("Solead Villamil", 1969, 6, 19)
+    id_cortese = i.actor_agregar("Rita Cortese", 1949, 8, 5)
 
-    # grace publica 100 tuits
-    ids_tuits = []
-    for i in range(100):
-        id_tuit = t.publicar(id_grace, f"Tuit nro {i + 1}")
-        ids_tuits.append(id_tuit)
+    id_9reinas = i.film_agregar("Nueve Reinas", 2000, 8, 31, [id_bredice, id_darin, id_pauls])
+    id_secreto = i.film_agregar("El secreto de sus ojos", 2009, 5, 21, [id_darin, id_villamil])
+    id_relatos = i.film_agregar("Relatos salvajes", 2014, 8, 21, [id_cortese, id_darin])
+    id_hable = i.film_agregar("Herencia", 2001, 6, 20, [id_cortese])
 
-    # Barbara comparte muchos tuits, muchas veces
-    compartidos = collections.Counter()
-    for i in range(1000):
-        id_tuit = random.choice(ids_tuits)
-        ok = t.compartir(id_tuit, id_barbara)
-        assert ok
-        compartidos.update((id_tuit,))
+    r = i.films_decadas()
 
-    # obtenemos los IDs de los tuits ordenados por cantidad de veces que fueron compartidos
-    tuits_mas_compartidos = t.tuits_mas_compartidos()
+    for k in list(r.keys()):
+        r[k] = sorted(r[k])
 
-    resultado_esperado = compartidos.most_common()
-    assert sorted(tuits_mas_compartidos) == sorted(resultado_esperado), f"\ntuits_mas_compartidos={tuits_mas_compartidos}\n   resultado_esperado={resultado_esperado}"
+    assert_iguales('films_decadas()', r, {
+        2000: sorted([id_9reinas, id_secreto, id_hable]),
+        2010: sorted([id_relatos]),
+    })
 
 def ejercicio_4():
-    t = tuiter.Tuiter()
+    i = imdb.IMDB()
+    actores, films = popular_imdb(i)
 
-    # creamos 2 autores
-    id_grace = t.crear_autor("Grace")
-    id_barbara = t.crear_autor("Barbara")
+    assert float(i.film_promedio(films[0])) == 0.0
 
-    # grace publica un tuit
-    id_tuit = t.publicar(id_grace, "Hola")
+    i.calificar(films[0], 7)
+    assert float(i.film_promedio(films[0])) == 7.0
 
-    # grace no puede dar like a su propio tuit
-    ok = t.tuit_dar_like(id_tuit, id_grace)
-    assert not ok
-    assert not t.tuit_fue_likeado_por(id_tuit, id_grace)
+    i.calificar(films[0], 9)
+    assert float(i.film_promedio(films[0])) == 8.0
 
-    # barbara le da like
-    ok = t.tuit_dar_like(id_tuit, id_barbara)
-    assert ok
-    assert t.tuit_fue_likeado_por(id_tuit, id_barbara)
+    for id_film in films:
+        promedio = random.uniform(1, 10)
+        for _ in range(random.randint(50, 150)):
+            i.calificar(id_film, puntaje_aleatorio(promedio))
 
-    # barbara no puede darle like dos veces
-    ok = t.tuit_dar_like(id_tuit, id_barbara)
-    assert not ok
-    assert t.tuit_fue_likeado_por(id_tuit, id_barbara)
-
-    # creamos 10000 autores, algunos le dan like al tuit
-    ids_autores = []
-    for i in range(10000):
-        id_autor = t.crear_autor(f"Autor nro {i + 1}")
-        ids_autores.append(id_autor)
-
-        if random.randint(0, 1) == 1:
-            ok = t.tuit_dar_like(id_tuit, id_autor)
-            assert ok
-
-    # verificamos que tuit_fue_likeado_por es eficiente:
-    for i in range(100000):
-        id_autor = random.choice(ids_autores)
-        t.tuit_fue_likeado_por(id_tuit, id_autor)
+    films = i.films_top10()
+    assert len(films) == 10
+    for j in range(len(films) - 1):
+        assert i.film_promedio(films[j]) >= i.film_promedio(films[j + 1])
 
 def ejercicio_5():
-    t = tuiter.Tuiter()
+    i = imdb.IMDB()
 
-    # creamos 2 autores
-    id_grace = t.crear_autor("Grace")
-    id_barbara = t.crear_autor("Barbara")
+    id_bredice = i.actor_agregar("Leticia Brédice", 1972, 8, 26)
+    id_darin = i.actor_agregar("Ricardo Darín", 1957, 1, 16)
+    id_pauls = i.actor_agregar("Gastón Pauls", 1972, 1, 17)
+    id_villamil = i.actor_agregar("Solead Villamil", 1969, 6, 19)
+    id_cortese = i.actor_agregar("Rita Cortese", 1949, 8, 5)
 
-    # grace publica un tuit
-    id_tuit = t.publicar(id_grace, "Hola")
+    id_9reinas = i.film_agregar("Nueve Reinas", 2000, 8, 31, [id_bredice, id_darin, id_pauls])
+    id_secreto = i.film_agregar("El secreto de sus ojos", 2009, 5, 21, [id_darin, id_villamil])
+    id_relatos = i.film_agregar("Relatos salvajes", 2014, 8, 21, [id_cortese, id_darin])
 
-    # el tuit no tiene respuestas
-    assert list(t.tuit_respuestas(id_tuit)) == []
+    assert i.distancia(id_darin, id_pauls) == 1
+    assert i.distancia(id_bredice, id_cortese) == 2
 
-    # el tuit no es en respuesta de otro tuit
-    assert t.tuit_en_respuesta_de(id_tuit) is None
+def popular_imdb(i):
+    actores = []
+    for _ in range(100):
+        id_actor = i.actor_agregar(
+            f"Actor {len(actores) + 1}",
+            random.randint(1920, 2010),
+            random.randint(1, 12),
+            random.randint(1, 28),
+        )
+        actores.append(id_actor)
 
-    # la cantidad del hilo es 1
-    assert t.tuit_cantidad_hilo(id_tuit) == 1
+    films = []
+    for _ in range(100):
+        id_film = i.film_agregar(
+            f"Film {len(films) + 1}",
+            random.randint(1940, 2020),
+            random.randint(1, 12),
+            random.randint(1, 28),
+            random.sample(actores, random.randint(1, 10)),
+        )
+        films.append(id_film)
 
-    # barbara responde al tuit
-    id_respuesta = t.responder(id_tuit, id_barbara, f"Respuesta")
+    return actores, films
 
-    # el tuit se publica en el muro de barbara
-    assert t.muro_cantidad(id_barbara) == 1
+def puntaje_aleatorio(promedio):
+    return max(1, min(10, int(random.gauss(promedio, 2))))
 
-    # el tuit es en respuesta del tuit de grace
-    assert t.tuit_en_respuesta_de(id_respuesta) == id_tuit
+def verificar_csv(ruta, filas):
+    def normalizar(filas):
+        return sorted([[str(x) for x in linea] for linea in filas])
+    filas = normalizar(filas)
+    with open(ruta) as f:
+        filas_archivo = normalizar(csv.reader(f))
+    assert filas_archivo == filas, \
+        f"El archivo CSV {ruta} no es correcto\nContenido esperado:\n  {filas}\nContenido obtenido:\n  {filas_archivo}"
 
-    # el tuit original tiene a id_respuesta entre sus respuestas
-    assert list(t.tuit_respuestas(id_tuit)) == [id_respuesta]
-
-    # la cantidad del hilo es 2
-    assert t.tuit_cantidad_hilo(id_tuit) == 2
-
-    # hay más respuestas
-    id_respuesta_2 = t.responder(id_respuesta, id_grace, f"Respuesta 2")
-    id_respuesta_3 = t.responder(id_respuesta_2, id_barbara, f"Respuesta 3")
-    # ojo, esta respuesta es al tuit original
-    id_respuesta_4 = t.responder(id_tuit, id_barbara, f"Otra Respuesta")
-
-    # la "forma" del hilo es:
-    # id_tuit
-    # | id_respuesta
-    # | | id_respuesta_2
-    # | | | id_respuesta_3
-    # | id_respuesta_4
-
-    # el tuit original tiene 2 respuestas
-    assert list(t.tuit_respuestas(id_tuit)) == [id_respuesta, id_respuesta_4]
-
-    # la cantidad del hilo es 5
-    assert t.tuit_cantidad_hilo(id_tuit) == 5
+def assert_iguales(k, v1, v2):
+    k1 = f"Resultado de {k}"
+    k2 = f"Resultado esperado"
+    n = max(len(k1), len(k2))
+    assert v1 == v2, f"\n  {k1:<{n}}: {v1}\n  {k2:<{n}}: {v2}"
 
 def main():
     ejercicios = [
